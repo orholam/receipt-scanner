@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 import { Button } from "@/components/ui/button";
 import { Camera as CameraIcon } from 'lucide-react';
@@ -9,14 +9,20 @@ interface CameraProps {
 
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
   const webcamRef = useRef<Webcam>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
+      setIsCapturing(true);
       onCapture(imageSrc);
       localStorage.setItem('capturedReceipt', imageSrc);
     }
   }, [onCapture]);
+
+  if (isCapturing) {
+    return null;
+  }
 
   return (
     <div className="camera-container shadow-lg bg-white p-4">
