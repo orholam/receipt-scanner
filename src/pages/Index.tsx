@@ -8,6 +8,7 @@ import { RotateCcw, Edit, Save } from 'lucide-react';
 const Index = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     // Check for saved image in localStorage on component mount
@@ -20,13 +21,20 @@ const Index = () => {
 
   const handleCapture = (image: string) => {
     setCapturedImage(image);
-    setIsScanning(false);
+    setShowPreview(true);
     toast.success("Receipt captured successfully!");
+    
+    // Switch to form after 1 second
+    setTimeout(() => {
+      setShowPreview(false);
+      setIsScanning(false);
+    }, 1000);
   };
 
   const handleReset = () => {
     setCapturedImage(null);
     setIsScanning(true);
+    setShowPreview(false);
     localStorage.removeItem('capturedReceipt');
   };
 
@@ -48,6 +56,14 @@ const Index = () => {
 
         {isScanning ? (
           <Camera onCapture={handleCapture} />
+        ) : showPreview ? (
+          <div className="camera-container shadow-lg bg-white p-4">
+            <img 
+              src={capturedImage || ''} 
+              alt="Captured receipt" 
+              className="w-full h-full object-cover rounded-md"
+            />
+          </div>
         ) : (
           <ReceiptForm onSubmit={handleSubmit} />
         )}
