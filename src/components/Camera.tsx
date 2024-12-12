@@ -1,5 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import Webcam from 'react-webcam';
+import { Button } from "@/components/ui/button";
+import { Camera as CameraIcon } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (image: string) => void;
@@ -12,6 +14,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
       onCapture(imageSrc);
+      localStorage.setItem('capturedReceipt', imageSrc);
     }
   }, [onCapture]);
 
@@ -33,6 +36,14 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
       <div className="corner corner-tr" />
       <div className="corner corner-bl" />
       <div className="corner corner-br" />
+      
+      <Button 
+        onClick={capture}
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 rounded-full"
+        size="icon"
+      >
+        <CameraIcon className="h-6 w-6" />
+      </Button>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Camera from '@/components/Camera';
 import ReceiptForm from '@/components/ReceiptForm';
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,15 @@ const Index = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(true);
 
+  useEffect(() => {
+    // Check for saved image in localStorage on component mount
+    const savedImage = localStorage.getItem('capturedReceipt');
+    if (savedImage) {
+      setCapturedImage(savedImage);
+      setIsScanning(false);
+    }
+  }, []);
+
   const handleCapture = (image: string) => {
     setCapturedImage(image);
     setIsScanning(false);
@@ -18,6 +27,7 @@ const Index = () => {
   const handleReset = () => {
     setCapturedImage(null);
     setIsScanning(true);
+    localStorage.removeItem('capturedReceipt');
   };
 
   const handleSubmit = (data: any) => {
