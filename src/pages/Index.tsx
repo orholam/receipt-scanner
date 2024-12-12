@@ -4,14 +4,17 @@ import ReceiptForm from '@/components/ReceiptForm';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RotateCcw, Edit, Save } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(true);
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    // Check for saved image in localStorage on component mount
     const savedImage = localStorage.getItem('capturedReceipt');
     if (savedImage) {
       setCapturedImage(savedImage);
@@ -21,20 +24,13 @@ const Index = () => {
 
   const handleCapture = (image: string) => {
     setCapturedImage(image);
-    setShowPreview(true);
+    setIsScanning(false);
     toast.success("Receipt captured successfully!");
-    
-    // Switch to form after 1 second
-    setTimeout(() => {
-      setShowPreview(false);
-      setIsScanning(false);
-    }, 1000);
   };
 
   const handleReset = () => {
     setCapturedImage(null);
     setIsScanning(true);
-    setShowPreview(false);
     localStorage.removeItem('capturedReceipt');
   };
 
@@ -56,16 +52,30 @@ const Index = () => {
 
         {isScanning ? (
           <Camera onCapture={handleCapture} />
-        ) : showPreview ? (
-          <div className="camera-container shadow-lg bg-white p-4">
-            <img 
-              src={capturedImage || ''} 
-              alt="Captured receipt" 
-              className="w-full h-full object-cover rounded-md"
-            />
-          </div>
         ) : (
-          <ReceiptForm onSubmit={handleSubmit} />
+          <div className="space-y-6">
+            {capturedImage && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="cursor-pointer">
+                    <img 
+                      src={capturedImage} 
+                      alt="Captured receipt" 
+                      className="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition-opacity"
+                    />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <img 
+                    src={capturedImage} 
+                    alt="Captured receipt" 
+                    className="w-full h-auto"
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+            <ReceiptForm onSubmit={handleSubmit} />
+          </div>
         )}
 
         <div className="flex justify-center gap-4 mt-6">
