@@ -45,7 +45,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
       
       <Button 
         onClick={capture}
-        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 rounded-full"
+        className="bg-blue-400 hover:bg-blue-500 absolute bottom-6 left-1/2 transform -translate-x-1/2 rounded-full"
         size="icon"
       >
         <CameraIcon className="h-6 w-6" />

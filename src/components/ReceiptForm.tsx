@@ -47,7 +47,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
         <Input id="notes" name="notes" />
       </div>
 
-      <Button type="submit" className="w-full">Submit</Button>
+      <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Submit</Button>
     </form>
   );
 };
