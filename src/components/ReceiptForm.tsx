@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Copy } from 'lucide-react';
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
@@ -38,10 +39,20 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
     console.log(data);
     // onSubmit(data);
 
-    // Then generate an id and include it below the form data
-    generateId().then((id) => {
-      setId(id);
-      setShareablePageCreated(true);
+    if (!shareablePageCreated) {
+      generateId().then((generatedId) => {
+        setId(generatedId);
+        setShareablePageCreated(true);
+      });
+    }
+  };
+
+  const handleCopy = () => {
+    const fullUrl = `${window.location.origin}/share/${id}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      console.log('URL copied to clipboard:', fullUrl);
+    }).catch(err => {
+      console.error('Failed to copy URL:', err);
     });
   };
 
@@ -82,9 +93,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
       {shareablePageCreated && (
         <div className="mt-4 text-center">
           <p className="text-gray-700">Shareable Page URL:</p>
-          <a href={`/share/${id}`} className="text-blue-500 hover:underline">
-            {`/share/${id}`}
-          </a>
+          <div className="flex justify-center items-center space-x-2">
+            <a href={`/share/${id}`} className="text-blue-500 hover:underline">
+              {`/share/${id}`}
+            </a>
+            <button onClick={handleCopy} className="text-gray-500 hover:text-gray-700">
+              <Copy size={16} />
+            </button>
+          </div>
         </div>
       )}
     </form>
