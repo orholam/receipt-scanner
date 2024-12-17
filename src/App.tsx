@@ -18,13 +18,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <div className="flex flex-col min-h-screen">
-          <Menu />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/login" element={<Login />} />
               <Route path="/share/:id" element={<Shareable />} />
             </Routes>
+            <Menu />
         </div>
       </BrowserRouter>
     </TooltipProvider>

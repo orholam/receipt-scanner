@@ -142,3 +142,6 @@
 .animate-fade-float-in {
   animation: fadeFloatIn .7s forwards;
 }
+body {
+  overflow-y: scroll;
+}

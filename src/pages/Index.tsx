@@ -22,6 +22,24 @@ const Index = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const container = document.querySelector('.max-w-md');
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth',
+      });
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   const handleCapture = (image: string) => {
     setCapturedImage(image);
     setIsScanning(false);
@@ -41,7 +59,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex-grow bg-gradient-to-b from-indigo-100 to-white p-4 md:p-8 mx-4 my-2 rounded-lg">
+    <div className="flex-grow bg-gradient-to-b from-indigo-100 to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10 ">
       <div className="max-w-md mx-auto space-y-6">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-semibold text-gray-800 mb-2">Receipt Scanner</h1>
