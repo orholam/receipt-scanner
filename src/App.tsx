@@ -23,7 +23,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/shareable" element={<Shareable />} />
+              <Route path="/share/:id" element={<Shareable />} />
             </Routes>
         </div>
       </BrowserRouter>

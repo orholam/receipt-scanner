@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,12 +7,42 @@ interface ReceiptFormProps {
   onSubmit: (data: any) => void;
 }
 
+const generateId = async (): Promise<string> => {
+  try {
+    // Fetch a random adjective
+    const adjectiveResponse = await fetch('https://random-word-form.herokuapp.com/random/adjective');
+    const adjectiveArray = await adjectiveResponse.json();
+    const adjective = adjectiveArray[0].replace(/\s+/g, '-');
+
+    // Fetch a random noun
+    const nounResponse = await fetch('https://random-word-form.herokuapp.com/random/noun');
+    const nounArray = await nounResponse.json();
+    const noun = nounArray[0].replace(/\s+/g, '-');
+
+    // Combine adjective and noun with a hyphen
+    return `${adjective}-${noun}`;
+  } catch (error) {
+    console.error('Error generating ID:', error);
+    return 'default-id';
+  }
+};
+
 const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
+  const [id, setId] = useState<string>('');
+  const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
-    onSubmit(data);
+    console.log(data);
+    // onSubmit(data);
+
+    // Then generate an id and include it below the form data
+    generateId().then((id) => {
+      setId(id);
+      setShareablePageCreated(true);
+    });
   };
 
   return (
@@ -48,6 +78,15 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
       </div>
 
       <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Submit</Button>
+
+      {shareablePageCreated && (
+        <div className="mt-4 text-center">
+          <p className="text-gray-700">Shareable Page URL:</p>
+          <a href={`/share/${id}`} className="text-blue-500 hover:underline">
+            {`/share/${id}`}
+          </a>
+        </div>
+      )}
     </form>
   );
 };

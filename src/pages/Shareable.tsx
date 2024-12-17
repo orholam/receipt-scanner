@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { useParams } from 'react-router-dom';
 const exampleReceiptItems = [
   'Burger - $10',
   'Fries - $5',
@@ -19,10 +19,12 @@ const Shareable = () => {
     );
   };
 
+  const { id } = useParams();
+
   return (
     <div className="flex flex-col flex-grow items-center justify-center bg-gradient-to-b from-indigo-100 to-white p-4 mx-4 my-2 rounded-lg">
       <div className="bg-white shadow-md rounded-lg p-8 max-w-lg w-full transition-all duration-300">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Select the items you bought</h1>
+        <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{id}</h1>
         <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
           {exampleReceiptItems.map((item) => (
             <div
