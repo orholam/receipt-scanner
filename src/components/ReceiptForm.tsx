@@ -94,7 +94,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
         <div className="mt-4 text-center">
           <p className="text-gray-700">Shareable Page URL:</p>
           <div className="flex justify-center items-center space-x-2">
-            <a href={`/share/${id}`} className="text-blue-500 hover:underline">
+            <a href={`/share/${id}`} target="_blank" className="text-blue-500 hover:underline">
               {`/share/${id}`}
             </a>
             <button onClick={handleCopy} className="text-gray-500 hover:text-gray-700">
