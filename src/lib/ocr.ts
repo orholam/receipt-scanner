@@ -76,7 +76,7 @@ export const performOcr = async (base64Image: string): Promise<void> => {
       },
       {
         headers: {
-          'Authorization': openai_api_key,
+          'Authorization': `Bearer ${openai_api_key}`,
           'Content-Type': 'application/json'
         }
       }
