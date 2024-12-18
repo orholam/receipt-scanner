@@ -89,11 +89,9 @@ const Index = () => {
                 </DialogContent>
               </Dialog>
             )}
-            
+            {!isOcrComplete ? <p> Receipt information is being processed... </p> : <ReceiptForm content={ocrResult} onSubmit={handleSubmit} />}
           </div>
         )}
-
-{!isOcrComplete ? <p> Receipt information is being processed... </p> : <ReceiptForm content={ocrResult} onSubmit={handleSubmit} />}
 
         <div className="flex justify-center gap-4 mt-6">
           {!isScanning && (
