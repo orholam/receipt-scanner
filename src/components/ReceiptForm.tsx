@@ -6,6 +6,7 @@ import { Copy } from 'lucide-react';
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
+  content: any;
 }
 
 const generateId = async (): Promise<string> => {
@@ -28,7 +29,7 @@ const generateId = async (): Promise<string> => {
   }
 };
 
-const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
+const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
   const [id, setId] = useState<string>('');
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
 
@@ -60,32 +61,35 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="vendor">Vendor</Label>
-        <Input id="vendor" name="vendor" defaultValue="Pizzeria" />
+        <Input id="vendor" name="vendor" defaultValue={content.businessName || "Pizzeria"} />
+      </div>
+      
+      {content.items && content.items.map((item, index) => (
+        <div key={index} className="flex space-x-4">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor={`itemName-${index}`}>Item Name</Label>
+            <Input id={`itemName-${index}`} name={`itemName-${index}`} defaultValue={item.itemName} />
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor={`itemCost-${index}`}>Item Cost</Label>
+            <Input id={`itemCost-${index}`} name={`itemCost-${index}`} defaultValue={`$${item.itemCost.toFixed(2)}`} />
+          </div>
+        </div>
+      ))}
+      
+      <div className="space-y-2">
+        <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+        <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={`$${content.totalBeforeTax.toFixed(2)}`} />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="cost">Cost</Label>
-        <Input id="cost" name="cost" defaultValue="$13.10" />
+        <Label htmlFor="totalAfterTax">Total After Tax</Label>
+        <Input id="totalAfterTax" name="totalAfterTax" defaultValue={`$${content.totalAfterTax.toFixed(2)}`} />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Input id="category" name="category" defaultValue="Meal" />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="type">Type</Label>
-        <Input id="type" name="type" defaultValue="Dinner" />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
-        <Input id="date" name="date" type="date" defaultValue="2018-02-13" />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Input id="notes" name="notes" />
+        <Label htmlFor="tip">Tip</Label>
+        <Input id="tip" name="tip" />
       </div>
 
       <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Submit</Button>

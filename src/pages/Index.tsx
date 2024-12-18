@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Camera from '@/components/Camera';
 import ReceiptForm from '@/components/ReceiptForm';
 import { Button } from "@/components/ui/button";
+import { performOcr } from '@/lib/ocr';
 import { toast } from "sonner";
 import { RotateCcw, Edit, Save } from 'lucide-react';
 import {
@@ -20,6 +21,8 @@ const scrollToBottom = () => {
 const Index = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(true);
+  const [isOcrComplete, setIsOcrComplete] = useState(false);
+  const [ocrResult, setOcrResult] = useState<any>(null);
 
   useEffect(() => {
     const savedImage = localStorage.getItem('capturedReceipt');
@@ -29,15 +32,20 @@ const Index = () => {
     }
   }, []);
 
-  const handleCapture = (image: string) => {
+  const handleCapture = async (image: string) => {
     setCapturedImage(image);
     setIsScanning(false);
+    const result = await performOcr(image);
+    setOcrResult(result);
+    setIsOcrComplete(true);
+    console.log("OCR complete");
     toast.success("Receipt captured successfully!");
   };
 
   const handleReset = () => {
     setCapturedImage(null);
     setIsScanning(true);
+    setIsOcrComplete(false);
     localStorage.removeItem('capturedReceipt');
   };
 
@@ -81,9 +89,11 @@ const Index = () => {
                 </DialogContent>
               </Dialog>
             )}
-            <ReceiptForm onSubmit={handleSubmit} />
+            
           </div>
         )}
+
+{!isOcrComplete ? <p> Receipt information is being processed... </p> : <ReceiptForm content={ocrResult} onSubmit={handleSubmit} />}
 
         <div className="flex justify-center gap-4 mt-6">
           {!isScanning && (

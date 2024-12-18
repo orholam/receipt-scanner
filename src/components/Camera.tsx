@@ -2,7 +2,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 import { Button } from "@/components/ui/button";
 import { Camera as CameraIcon } from 'lucide-react';
-import { performOcr } from '@/lib/ocr';
 
 interface CameraProps {
   onCapture: (image: string) => void;
@@ -18,7 +17,6 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
       setIsCapturing(true);
       onCapture(imageSrc);
       localStorage.setItem('capturedReceipt', imageSrc);
-      performOcr(imageSrc);
     }
   }, [onCapture]);
 
