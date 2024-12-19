@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const openai_api_key = import.meta.env.VITE_OPENAI_API_KEY;
 const openai_endpoint = 'https://api.openai.com/v1/chat/completions';
+import { toast } from "sonner";
 
 const tools = [
   {
@@ -85,10 +86,19 @@ export const performOcr = async (base64Image: string): Promise<void> => {
     );
 
     console.log(response.data); // Log the OCR result in JSON
-    const raw_json = response.data.choices[0].message.tool_calls[0].function.arguments;
-    const json = JSON.parse(raw_json);
-    console.log(json);
-    return json;
+    try {
+        const raw_json = response.data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+        if (!raw_json) {
+            throw new Error("Failed to retrieve the expected data structure.");
+        }
+        const json = JSON.parse(raw_json);
+        console.log(json);
+        return json;
+    } catch (error) {
+        console.error('Error processing OCR response:', error);
+        toast.error('An error occurred while processing the OCR response. Please try again.');
+        // Handle the error appropriately, e.g., return a default value or rethrow
+    }
   } catch (error) {
     console.error('Error performing OCR:', error);
   }
