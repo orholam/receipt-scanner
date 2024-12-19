@@ -35,11 +35,19 @@ const Index = () => {
   const handleCapture = async (image: string) => {
     setCapturedImage(image);
     setIsScanning(false);
-    const result = await performOcr(image);
-    setOcrResult(result);
-    setIsOcrComplete(true);
-    console.log("OCR complete");
-    toast.success("Receipt captured successfully!");
+    try {
+        const result = await performOcr(image);
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        setOcrResult(result);
+        setIsOcrComplete(true);
+        console.log("OCR complete");
+        toast.success("Receipt captured successfully!");
+    } catch (error) {
+        console.error('Error during OCR:', error);
+        toast.error('An error occurred while capturing the receipt. Please try again.');
+    }
   };
 
   const handleReset = () => {

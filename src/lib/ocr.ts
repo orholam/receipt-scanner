@@ -49,9 +49,12 @@ const tools = [
   }
 ]
 
+interface OcrResult {
+    error?: string; // Optional error property
+    // Add other properties that you expect in the result
+}
 
-
-export const performOcr = async (base64Image: string): Promise<void> => {
+export const performOcr = async (base64Image: string): Promise<OcrResult> => {
   try {
     console.log("openai_api_key", openai_api_key);
     console.log("final_key", `Bearer ${openai_api_key}`);
@@ -86,20 +89,14 @@ export const performOcr = async (base64Image: string): Promise<void> => {
     );
 
     console.log(response.data); // Log the OCR result in JSON
-    try {
-        const raw_json = response.data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-        if (!raw_json) {
-            throw new Error("Failed to retrieve the expected data structure.");
-        }
-        const json = JSON.parse(raw_json);
-        console.log(json);
-        return json;
-    } catch (error) {
-        console.error('Error processing OCR response:', error);
-        toast.error('An error occurred while processing the OCR response. Please try again.');
-        // Handle the error appropriately, e.g., return a default value or rethrow
+    const raw_json = response.data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    if (!raw_json) {
+      return { error: "Failed to retrieve the expected data structure." }; // Return error if data structure is not as expected
     }
+    const json = JSON.parse(raw_json);
+    return json; // Return the parsed JSON
   } catch (error) {
     console.error('Error performing OCR:', error);
+    return { error: error.message }; // Return the error message
   }
 };
