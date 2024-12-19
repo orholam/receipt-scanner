@@ -52,6 +52,8 @@ const tools = [
 
 export const performOcr = async (base64Image: string): Promise<void> => {
   try {
+    console.log("openai_api_key", openai_api_key);
+    console.log("final_key", `Bearer ${openai_api_key}`);
     const response = await axios.post(openai_endpoint, {
           "model": "gpt-4o-mini",
           "store": true,
