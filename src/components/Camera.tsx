@@ -10,6 +10,7 @@ interface CameraProps {
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
   const webcamRef = useRef<Webcam>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isWebcamLoaded, setIsWebcamLoaded] = useState(false);
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
@@ -19,6 +20,10 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
       localStorage.setItem('capturedReceipt', imageSrc);
     }
   }, [onCapture]);
+
+  const handleWebcamLoad = useCallback(() => {
+    setIsWebcamLoaded(true);
+  }, []);
 
   if (isCapturing) {
     return null;
@@ -33,7 +38,8 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         videoConstraints={{
           facingMode: 'environment',
         }}
-        className="w-full h-full object-cover"
+        className={`w-full h-full object-cover transition-opacity duration-500 ${isWebcamLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onUserMedia={handleWebcamLoad}
       />
       <div className="scanner-overlay">
         <div className="scanning-line" />

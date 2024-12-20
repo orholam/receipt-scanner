@@ -13,9 +13,9 @@ const Menu = () => {
       <ul className="flex justify-center items-center space-x-6">
         <li>
           <Link
-            to="/"
+            to="/scan"
             className={`flex items-center transition-colors ${
-              isActive('/') ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'
+              isActive('/scan') ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'
             }`}
           >
             <Home className="mr-2" size={20} /> Home
