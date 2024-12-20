@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Star, Shield, Zap, Github, Twitter, Linkedin } from 'lucide-react';
 import logo from '../assets/logo2.png';
 import appScreenshot from '../assets/billclub3.jpg';
@@ -6,6 +6,19 @@ import appScreenshot2 from '../assets/billclub2.jpg';
 import appScreenshot3 from '../assets/billclub5.jpg';
 import { Link } from 'react-router-dom';
 const LandingPage: React.FC = () => {
+    const [hasScrolled, setHasScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setHasScrolled(window.scrollY > 0);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
     const steps = [
         {
             title: "1. Scan Your Receipt",
@@ -27,7 +40,7 @@ const LandingPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
             {/* Navigation */}
-            <nav className="max-w-7xl mx-auto px-6 py-6">
+            <nav className={`max-w-7xl mx-auto px-6 py-6 fixed top-0 left-0 right-0 transition-all duration-300 ${hasScrolled ? 'bg-white bg-opacity-30 backdrop-blur-lg' : 'bg-transparent'} rounded-lg z-50`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <img src={logo} alt="Bill Splitter Logo" className="h-8" />
@@ -41,7 +54,7 @@ const LandingPage: React.FC = () => {
             </nav>
 
             {/* Hero Section */}
-            <div className="container mx-auto px-6 py-12 md:py-24">
+            <div className=" min-h-screen container mx-auto px-6 py-24 md:py-32">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     {/* App Screenshot */}
                     <div className="order-2 md:order-1">

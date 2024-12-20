@@ -38,7 +38,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         videoConstraints={{
           facingMode: 'environment',
         }}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${isWebcamLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${isWebcamLoaded ? 'opacity-100 blur-sm' : 'opacity-0 blur-none'}`}
         onUserMedia={handleWebcamLoad}
       />
       <div className="scanner-overlay">
