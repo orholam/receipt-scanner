@@ -13,7 +13,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col flex-grow items-center justify-center bg-gradient-to-b from-indigo-100 to-white md:p-8 mx-4 my-4 rounded-lg mb-10">
+    <div className="flex flex-col flex-grow items-center justify-center bg-gradient-to-b from-[#d4e6ff] to-white md:p-8 mx-4 my-4 rounded-lg mb-10">
       <div className="bg-white shadow-md rounded-lg p-8 max-w-sm w-full">
         <h1 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Login</h1>
         <form onSubmit={handleSubmit} className="space-y-6">

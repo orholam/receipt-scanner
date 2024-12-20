@@ -64,7 +64,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex-grow bg-gradient-to-b from-indigo-100 to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10 ">
+    <div className="flex-grow bg-gradient-to-b from-[#d4e6ff] to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10 ">
       <div className="max-w-md mx-auto space-y-6 mb-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-semibold text-gray-800 mb-2">Bill Club</h1>
