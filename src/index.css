@@ -42,7 +42,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(139, 139, 255, 0.2) 0%, rgba(139, 139, 255, 0.1) 100%);
+  background: linear-gradient(180deg, rgba(139, 180, 255, 0.2) 0%, rgba(139, 160, 255, 0.1) 100%);
   pointer-events: none;
 }
 
