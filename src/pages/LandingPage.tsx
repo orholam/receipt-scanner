@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Star, Shield, Zap, Github, Twitter, Linkedin } from 'lucide-react';
-import logo from '../assets/logo2.png';
-import appScreenshot from '../assets/billclub3.jpg';
+import appScreenshot from '../assets/billclub8.jpg';
 import appScreenshot2 from '../assets/billclub2.jpg';
 import appScreenshot3 from '../assets/billclub5.jpg';
 import { Link } from 'react-router-dom';
@@ -43,7 +42,8 @@ const LandingPage: React.FC = () => {
             <nav className={`max-w-7xl mx-auto px-6 py-6 fixed top-0 left-0 right-0 transition-all duration-300 ${hasScrolled ? 'bg-white bg-opacity-30 backdrop-blur-lg' : 'bg-transparent'} rounded-lg z-50`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <img src={logo} alt="Bill Splitter Logo" className="h-8" />
+                        <Zap className="h-8 w-8 text-blue-600" />
+                        <h1 className="text-2xl font-bold">BILL CLUB</h1>
                     </div>
                     <div className="hidden md:flex items-center space-x-8">
                         <Link to="/scan" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">

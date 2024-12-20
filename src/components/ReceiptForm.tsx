@@ -92,7 +92,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
         <Input id="tip" name="tip" />
       </div>
 
-      <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Submit</Button>
+      <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Shareable Link</Button>
 
       {shareablePageCreated && (
         <div className="mt-4 text-center">

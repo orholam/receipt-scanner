@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { performOcr } from '@/lib/ocr';
 import { toast } from "sonner";
 import { RotateCcw, Edit, Save } from 'lucide-react';
-import logo from '../assets/logo2.png';
+import { Zap } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -68,7 +68,7 @@ const Index = () => {
     <div className="flex-grow bg-gradient-to-b from-[#d4e6ff] to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10 ">
       <div className="max-w-md mx-auto space-y-6 mb-10">
         <div className="text-center mb-8">
-          <img src={logo} alt="Bill Club" className="w-40 mt-4 mb-4 mx-auto" />
+          <h1 className="text-2xl font-bold">BILL CLUB</h1>
         </div>
 
         {isScanning ? (
