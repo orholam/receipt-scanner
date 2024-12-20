@@ -76,7 +76,7 @@ const LandingPage: React.FC = () => {
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400"> Just a few clicks.</span>
                         </h1>
                         <p className="mt-6 text-xl text-gray-600">
-                            Effortlessly split bills with friends using a shareable link.
+                            Effortlessly <span className="underline">split bills with friends</span> using a shareable link.
                         </p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4">
                             <Link to="/scan" className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
