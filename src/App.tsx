@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import Shareable from "./pages/Shareable";
 import Menu from "@/components/Menu";
 import LandingPage from "./pages/LandingPage";
+import { Analytics } from "@vercel/analytics/react"
+
 const queryClient = new QueryClient();
 
 const AppContent = () => {
@@ -35,6 +37,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AppContent />
+        <Analytics />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
