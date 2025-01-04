@@ -144,7 +144,7 @@ const LandingPage: React.FC = () => {
                                 <span className="text-xl font-bold text-gray-900">Bill Club</span>
                             </div>
                             <p className="text-gray-600 mb-4">
-                                The easiest way to split bills with your friends and family.
+                                The easiest way to split bills with your friends and friends.
                             </p>
                         </div>
                         
@@ -169,7 +169,7 @@ const LandingPage: React.FC = () => {
                     
                     <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center">
                         <p className="text-gray-600 text-sm">
-                            © {new Date().getFullYear()} Bill Splitter. All rights reserved.
+                            © {new Date().getFullYear()} Bill Club. All rights reserved.
                         </p>
                         <div className="flex space-x-4 mt-4 md:mt-0">
                             <a href="#" className="text-gray-400 hover:text-gray-600">
