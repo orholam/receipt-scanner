@@ -50,7 +50,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
   const supabase = useSupabase();
 
   const handleRemoveItem = (index: number) => {
-    const updatedItems = localContent.items.filter((_, i) => i !== index);
+    const updatedItems = [...localContent.items]; 
+    updatedItems.splice(index, 1); 
     setLocalContent({ ...localContent, items: updatedItems });
   };
 
