@@ -3,11 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy } from 'lucide-react';
+import { useSupabase } from '@/SupabaseContext';
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
   content: any;
 }
+
+// Type for Transaction
+type Transaction = {
+  businessName: string;
+  items: {
+    itemName: string;
+    itemCost: number;
+  }[];
+  tip?: number;
+  totalBeforeTax: number;
+  totalAfterTax: number;
+};
 
 const generateId = async (): Promise<string> => {
   try {
@@ -31,20 +44,68 @@ const generateId = async (): Promise<string> => {
 
 const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
   const [id, setId] = useState<string>('');
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
+  const supabase = useSupabase();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
+    console.log("DATA");
     console.log(data);
-    // onSubmit(data);
 
     if (!shareablePageCreated) {
-      generateId().then((generatedId) => {
-        setId(generatedId);
-        setShareablePageCreated(true);
+      const generatedId = await generateId();
+      setId(generatedId);
+
+      // Create new transaction row in supabase
+      const { data: transactionData, error } = await supabase.from('transaction').insert({
+        id: generatedId,
+        date: new Date().toISOString(),
+        restaurant: data.vendor,
+        tip: data.tip,
+        tax: Number(data.totalAfterTax) - Number(data.totalBeforeTax),
+        total: Number(data.totalAfterTax),
+        status: 'incomplete',
+        owner_id: '123'
       });
+
+      if (error) {
+        console.error('Error creating transaction:', error);
+      } else {
+        console.log('Transaction created successfully:', transactionData);
+
+        // Create new item rows in supabase that reference the transaction
+        const items = [];
+        let index = 0;
+        while (data[`itemName-${index}`] !== undefined) {
+          items.push({
+            transaction_id: generatedId,
+            itemName: data[`itemName-${index}`],
+            itemCost: Number(data[`itemCost-${index}`])
+          });
+          index++;
+        }
+
+        for (const item of items) {
+          const { data: itemsData, error: itemsError } = await supabase.from('item').insert({
+            transaction_id: generatedId,
+            item_name: item.itemName,
+            cost: item.itemCost,
+            quantity: 1,
+            owner_nickname: '123'
+          });
+          if (itemsError) {
+            console.error('Error creating items:', itemsError);
+          } else {
+            console.log('Items created successfully:', itemsData);
+          }
+        }
+
+      }
+
+      setShareablePageCreated(true);
     }
   };
 
@@ -72,19 +133,28 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
           </div>
           <div className="flex-1 space-y-2">
             <Label htmlFor={`itemCost-${index}`}>Item Cost</Label>
-            <Input id={`itemCost-${index}`} name={`itemCost-${index}`} defaultValue={`$${item.itemCost.toFixed(2)}`} />
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+              <Input id={`itemCost-${index}`} name={`itemCost-${index}`} defaultValue={item.itemCost.toFixed(2)} className="pl-6" />
+            </div>
           </div>
         </div>
       ))}
       
       <div className="space-y-2">
         <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
-        <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={`$${content.totalBeforeTax.toFixed(2)}`} />
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={content.totalBeforeTax.toFixed(2)} className="pl-6" />
+        </div>
       </div>
       
       <div className="space-y-2">
         <Label htmlFor="totalAfterTax">Total After Tax</Label>
-        <Input id="totalAfterTax" name="totalAfterTax" defaultValue={`$${content.totalAfterTax.toFixed(2)}`} />
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="totalAfterTax" name="totalAfterTax" defaultValue={content.totalAfterTax.toFixed(2)} className="pl-6" />
+        </div>
       </div>
       
       <div className="space-y-2">
