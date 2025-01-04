@@ -190,7 +190,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
       
       <div className="space-y-2">
         <Label htmlFor="tip">Tip</Label>
-        <Input id="tip" name="tip" />
+        <Input id="tip" name="tip" defaultValue="0" />
       </div>
 
       <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Shareable Link</Button>
