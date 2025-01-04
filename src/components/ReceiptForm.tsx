@@ -54,7 +54,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
     setLocalContent({ ...localContent, items: updatedItems });
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
     const newItem = { itemName: '', itemCost: 0 };
     setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
   };
@@ -163,7 +164,11 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
         </div>
       ))}
 
-      <Button onClick={handleAddItem} className="w-full border border-blue-400 text-blue-400 hover:bg-blue-100 flex justify-center items-center bg-transparent">
+      <Button 
+        onClick={handleAddItem} 
+        type="button"
+        className="w-full border border-blue-400 text-blue-400 hover:bg-blue-100 flex justify-center items-center bg-transparent"
+      >
         <PlusCircle size={20} />
       </Button>
 
