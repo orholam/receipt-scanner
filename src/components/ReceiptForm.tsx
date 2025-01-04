@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy } from 'lucide-react';
+import { Copy, MinusCircle, PlusCircle } from 'lucide-react';
 import { useSupabase } from '@/SupabaseContext';
 
 interface ReceiptFormProps {
@@ -46,7 +46,18 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
   const [id, setId] = useState<string>('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
+  const [localContent, setLocalContent] = useState(content);
   const supabase = useSupabase();
+
+  const handleRemoveItem = (index: number) => {
+    const updatedItems = localContent.items.filter((_, i) => i !== index);
+    setLocalContent({ ...localContent, items: updatedItems });
+  };
+
+  const handleAddItem = () => {
+    const newItem = { itemName: '', itemCost: 0 };
+    setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,30 +133,45 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="vendor">Vendor</Label>
-        <Input id="vendor" name="vendor" defaultValue={content.businessName || "Pizzeria"} />
+        <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} />
       </div>
       
-      {content.items && content.items.map((item, index) => (
-        <div key={index} className="flex space-x-4">
+      {localContent.items && localContent.items.map((item, index) => (
+        <div key={index} className="flex space-x-4 items-center">
           <div className="flex-1 space-y-2">
             <Label htmlFor={`itemName-${index}`}>Item Name</Label>
-            <Input id={`itemName-${index}`} name={`itemName-${index}`} defaultValue={item.itemName} />
+            <Input
+              id={`itemName-${index}`}
+              name={`itemName-${index}`}
+              defaultValue={item.itemName}
+            />
           </div>
           <div className="flex-1 space-y-2">
             <Label htmlFor={`itemCost-${index}`}>Item Cost</Label>
-            <div className="relative">
-              <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-              <Input id={`itemCost-${index}`} name={`itemCost-${index}`} defaultValue={item.itemCost.toFixed(2)} className="pl-6" />
-            </div>
+            <Input
+              id={`itemCost-${index}`}
+              name={`itemCost-${index}`}
+              defaultValue={item.itemCost.toFixed(2)}
+            />
           </div>
+          <button
+            onClick={() => handleRemoveItem(index)}
+            className="text-red-500 hover:text-red-600 flex items-center"
+          >
+            <MinusCircle size={20} />
+          </button>
         </div>
       ))}
-      
+
+      <Button onClick={handleAddItem} className="w-full border border-green-400 text-green-400 hover:bg-green-100 flex justify-center items-center bg-transparent">
+        <PlusCircle size={20} />
+      </Button>
+
       <div className="space-y-2">
         <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={content.totalBeforeTax.toFixed(2)} className="pl-6" />
+          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={localContent.totalBeforeTax.toFixed(2)} className="pl-6" />
         </div>
       </div>
       
@@ -153,7 +179,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
         <Label htmlFor="totalAfterTax">Total After Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="totalAfterTax" name="totalAfterTax" defaultValue={content.totalAfterTax.toFixed(2)} className="pl-6" />
+          <Input id="totalAfterTax" name="totalAfterTax" defaultValue={localContent.totalAfterTax.toFixed(2)} className="pl-6" />
         </div>
       </div>
       
