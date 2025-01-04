@@ -79,10 +79,12 @@ const LandingPage: React.FC = () => {
                             Effortlessly <span className="underline">split bills with friends</span> using a shareable link.
                         </p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                            <Link to="/scan" className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                                <span>Scan Receipt</span>
-                                <ArrowRight className="h-5 w-5" />
-                            </Link>
+                            <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
+                                <Link to="/scan" className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    <span>Scan Receipt</span>
+                                    <ArrowRight className="h-5 w-5" />
+                                </Link>
+                            </div>
                             <a href="#features" className="flex items-center justify-center space-x-2 bg-white text-gray-900 px-8 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                                 How It Works
                             </a>

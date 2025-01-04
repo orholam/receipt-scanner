@@ -148,3 +148,21 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+@keyframes gradient-direction {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-gradient-direction {
+    background-size: 200% 200%;
+    animation: gradient-direction 5s linear infinite;
+}
+
