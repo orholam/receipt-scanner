@@ -156,14 +156,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
           </div>
           <button
             onClick={() => handleRemoveItem(index)}
-            className="text-red-500 hover:text-red-600 flex items-center"
+            className="text-blue-500 hover:text-blue-600 flex items-center"
           >
             <MinusCircle size={20} />
           </button>
         </div>
       ))}
 
-      <Button onClick={handleAddItem} className="w-full border border-green-400 text-green-400 hover:bg-green-100 flex justify-center items-center bg-transparent">
+      <Button onClick={handleAddItem} className="w-full border border-blue-400 text-blue-400 hover:bg-blue-100 flex justify-center items-center bg-transparent">
         <PlusCircle size={20} />
       </Button>
 
@@ -174,7 +174,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
           <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={localContent.totalBeforeTax.toFixed(2)} className="pl-6" />
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="totalAfterTax">Total After Tax</Label>
         <div className="relative">
