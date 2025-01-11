@@ -54,6 +54,15 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
     setLocalContent({ ...localContent, items: updatedItems });
   };
 
+  const handleItemChange = (index: number, field: string, value: string) => {
+    setLocalContent(prevContent => ({
+      ...prevContent,
+      items: prevContent.items.map((item, i) =>
+        i === index ? { ...item, [field]: field === 'itemCost' ? parseFloat(value) || 0 : value } : item
+      )
+    }));
+  };
+
   const handleAddItem = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent form submission
     const newItem = { itemName: '', itemCost: 0 };
@@ -138,13 +147,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
       </div>
       
       {localContent.items && localContent.items.map((item, index) => (
-        <div key={index} className="flex space-x-4 items-center">
+        <div key={`${item.itemName}-${index}`} className="flex space-x-4 items-center">
           <div className="flex-1 space-y-2">
             <Label htmlFor={`itemName-${index}`}>Item Name</Label>
             <Input
               id={`itemName-${index}`}
               name={`itemName-${index}`}
               defaultValue={item.itemName}
+              onBlur={(e) => handleItemChange(index, 'itemName', e.target.value)}
             />
           </div>
           <div className="flex-1 space-y-2">
@@ -153,6 +163,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
               id={`itemCost-${index}`}
               name={`itemCost-${index}`}
               defaultValue={item.itemCost.toFixed(2)}
+              onBlur={(e) => handleItemChange(index, 'itemCost', e.target.value)}
             />
           </div>
           <button

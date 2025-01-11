@@ -62,10 +62,10 @@ const Shareable = () => {
         <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
           {items.map((item) => (
             <div
-              key={item.id}
-              onClick={() => toggleItemSelection(item.item_name)}
+              key={`${item.id}-${item.item_name}`}
+              onClick={() => toggleItemSelection(`${item.id}-${item.item_name}`)}
               className={`cursor-pointer w-full px-4 py-2 rounded-full border text-center ${
-                selectedItems.includes(item.item_name)
+                selectedItems.includes(`${item.id}-${item.item_name}`)
                   ? 'bg-blue-400 text-white'
                   : 'bg-white text-gray-800 border border-grey-300'
               } transition-colors duration-200`}
