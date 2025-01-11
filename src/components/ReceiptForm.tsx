@@ -179,8 +179,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
         onClick={handleAddItem} 
         type="button"
         className="w-full border border-blue-400 text-blue-400 hover:bg-blue-100 flex justify-center items-center bg-transparent"
+        style={{ height: 'auto' }}
       >
-        <PlusCircle size={20} />
+        <PlusCircle size={20} style={{ width: '20px', height: '20px' }} />
       </Button>
 
       <div className="space-y-2">
