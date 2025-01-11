@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useSupabase } from '@/SupabaseContext';
 
 const Shareable = () => {
+  const [isNicknameSet, setIsNicknameSet] = useState<boolean>(false);
+  const [nickname, setNickname] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [transactionName, setTransactionName] = useState<string | null>(null);
@@ -57,30 +59,62 @@ const Shareable = () => {
       <div className="absolute inset-x-0 bottom-0 transform-gpu overflow-hidden blur-3xl sm:bottom-60">
         <div className="relative right-[calc(50%-20rem)] aspect-[1155/678] w-[48rem] translate-x-1/2 rotate-[-30deg] bg-gradient-to-tr from-[#b3bbff] to-[#b3faff] opacity-30 sm:right-[calc(50%-40rem)] sm:w-[96rem]" />
       </div>
-      <div className="bg-white bg-opacity-30 backdrop-blur-md rounded-lg p-8 max-w-lg w-full transition-all duration-300">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{transactionName}</h1>
-        <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
-          {items.map((item) => (
-            <div
-              key={`${item.id}-${item.item_name}`}
-              onClick={() => toggleItemSelection(`${item.id}-${item.item_name}`)}
-              className={`cursor-pointer w-full px-4 py-2 rounded-full border text-center ${
-                selectedItems.includes(`${item.id}-${item.item_name}`)
-                  ? 'bg-blue-400 text-white'
-                  : 'bg-white text-gray-800 border border-grey-300'
-              } transition-colors duration-200`}
-            >
-              {item.item_name} - ${item.cost}
-            </div>
-          ))}
+      <div className={`bg-white bg-opacity-30 backdrop-blur-md rounded-lg p-8 max-w-lg w-full transition-all ease-in-out duration-300 ${isNicknameSet ? 'mb-20' : 'mb-0'}`}>
+        <div className={`transition-opacity duration-700 ${isNicknameSet ? 'opacity-0' : 'opacity-100'}`}>
+          {!isNicknameSet && (
+            <>
+              <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What's your nickname?</h1>
+              <input 
+                type="text"
+                placeholder="Type here..."
+                className="w-full px-4 py-2 rounded-full border text-center"
+                onChange={(e) => setNickname(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setIsNicknameSet(true);
+                  }
+                }}
+              />
+              <br/><br/>
+              <button
+                className="w-full bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 transition-opacity duration-300 opacity-0 animate-fade-float-in"
+                onClick={() => setIsNicknameSet(true)}
+              >
+                Claim your items
+              </button>
+            </>
+          )}
         </div>
-        {selectedItems.length > 0 && (
-          <button
-            className="w-full bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 transition-opacity duration-300 opacity-0 animate-fade-float-in"
-          >
-            Claim
-          </button>
-        )}
+        <div className={`transition-opacity duration-700 ${isNicknameSet ? 'opacity-100' : 'opacity-0'}`}>
+          {isNicknameSet && (
+            <>
+              <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{transactionName}</h1>
+              <p className="text-gray-800 mb-6 text-center">What items were yours {nickname}?</p>
+              <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
+                {items.map((item) => (
+                  <div
+                    key={`${item.id}-${item.item_name}`}
+                    onClick={() => toggleItemSelection(`${item.id}-${item.item_name}`)}
+                    className={`cursor-pointer w-full px-4 py-2 rounded-full border text-center ${
+                      selectedItems.includes(`${item.id}-${item.item_name}`)
+                        ? 'bg-blue-400 text-white'
+                        : 'bg-white text-gray-800 border border-grey-300'
+                    } transition-colors duration-200`}
+                  >
+                    {item.item_name} - ${item.cost}
+                  </div>
+                ))}
+              </div>
+              {selectedItems.length > 0 && (
+                <button
+                  className="w-full bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 transition-opacity duration-300 opacity-0 animate-fade-float-in"
+                >
+                  Claim
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
