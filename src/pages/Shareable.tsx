@@ -130,7 +130,7 @@ const Shareable = () => {
               <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
                 {Object.keys(claimedItems).map((item) => (
                   <>
-                    <div className="flex flex-col w-full px-4 py-2 rounded-lg bg-orange-100 text-gray-800 border-t-4 border-gray-300">
+                    <div className="flex flex-col w-full px-4 py-2 rounded-lg bg-orange-100 text-gray-800 border-t-4 border-orange-200">
                       <p className="text-right">{item}</p>
                       {claimedItems[item].map((item) => (
                         <p>{item.item_name} - ${item.cost}</p>
@@ -142,7 +142,7 @@ const Shareable = () => {
                 {unclaimedItems.map((item) => (
                   <div
                     key={`${item.id}`}
-                    onClick={() => toggleItemSelection(`${item.id}`)}
+                    onClick={() => toggleItemSelection(`${item.id}`)} // TODO: add full item, might make it easier to update state after claim and before backend updated
                     className={`cursor-pointer w-full px-4 py-2 rounded-full border text-center ${
                       selectedItems.includes(`${item.id}`)
                         ? 'bg-blue-400 text-white'
