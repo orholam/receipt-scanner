@@ -115,7 +115,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
             item_name: item.itemName,
             cost: item.itemCost,
             quantity: 1,
-            owner_nickname: '123'
+            owner_nickname: ''
           });
           if (itemsError) {
             console.error('Error creating items:', itemsError);
