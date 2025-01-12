@@ -138,7 +138,7 @@ const Shareable = () => {
                     </div>
                   </>
                 ))}
-                <p className="text-gray-800 mb-6 text-center">What items were yours {nickname}?</p>
+                {unclaimedItems.length > 0 && <p className="text-gray-800 mb-6 text-center">What items were yours {nickname}?</p>}
                 {unclaimedItems.map((item) => (
                   <div
                     key={`${item.id}`}
