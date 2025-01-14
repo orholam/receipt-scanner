@@ -33,10 +33,6 @@ const tools = [
                           }
                       }
                   },
-                  "totalBeforeTax": {
-                      "type": "number",
-                      "description": "The total cost before tax."
-                  },
                   "totalAfterTax": {
                       "type": "number",
                       "description": "The total cost after tax."

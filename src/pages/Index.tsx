@@ -27,7 +27,6 @@ type OCRResult = {
     itemName: string;
     itemCost: number;
   }[];
-  totalBeforeTax: number;
   totalAfterTax: number;
 };
 

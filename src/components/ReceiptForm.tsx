@@ -18,7 +18,7 @@ type Transaction = {
     itemCost: number;
   }[];
   tip?: number;
-  totalBeforeTax: number;
+  tax: number;
   totalAfterTax: number;
 };
 
@@ -86,7 +86,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
         date: new Date().toISOString(),
         restaurant: data.vendor,
         tip: data.tip,
-        tax: Number(data.totalAfterTax) - Number(data.totalBeforeTax),
+        tax: data.tax,
         total: Number(data.totalAfterTax),
         status: 'incomplete',
         owner_id: '123'
@@ -185,10 +185,10 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
       </Button>
 
       <div className="space-y-2">
-        <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+        <Label htmlFor="tax">Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={localContent.totalBeforeTax.toFixed(2)} className="pl-6" />
+          <Input id="tax" name="tax" defaultValue="0" className="pl-6" />
         </div>
       </div>
 
@@ -202,7 +202,10 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
       
       <div className="space-y-2">
         <Label htmlFor="tip">Tip</Label>
-        <Input id="tip" name="tip" defaultValue="0" />
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="tip" name="tip" defaultValue="0" className="pl-6" />
+        </div>
       </div>
 
       <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Shareable Link</Button>
