@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+
 const scrollToBottom = () => {
   window.scrollTo({
     top: document.body.scrollHeight,
@@ -19,11 +20,21 @@ const scrollToBottom = () => {
   });
 };
 
+// Type for ocrResult
+type OCRResult = {
+  businessName: string;
+  items: {
+    itemName: string;
+    itemCost: number;
+  }[];
+  totalAfterTax: number;
+};
+
 const Index = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const [isOcrComplete, setIsOcrComplete] = useState(false);
-  const [ocrResult, setOcrResult] = useState<any>(null);
+  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
 
   useEffect(() => {
     const savedImage = localStorage.getItem('capturedReceipt');
@@ -58,7 +69,7 @@ const Index = () => {
     localStorage.removeItem('capturedReceipt');
   };
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: OCRResult) => {
     console.log('Form submitted:', data);
     toast.success("Receipt information saved!");
     handleReset();

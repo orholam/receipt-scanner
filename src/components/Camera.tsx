@@ -1,7 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 import { Button } from "@/components/ui/button";
-import { Camera as CameraIcon } from 'lucide-react';
+import { Camera as CameraIcon, ChartNoAxesColumnDecreasing } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (image: string) => void;
@@ -20,6 +21,30 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
       localStorage.setItem('capturedReceipt', imageSrc);
     }
   }, [onCapture]);
+
+  const upload = useCallback(() => {
+    console.log('upload');
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files[0];
+      console.log(file);
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const imageSrc = reader.result as string;
+          setIsCapturing(true);
+          onCapture(imageSrc);
+          localStorage.setItem('capturedReceipt', imageSrc);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    fileInput.click();
+  }, []);
 
   const handleWebcamLoad = useCallback(() => {
     setIsWebcamLoaded(true);
@@ -55,6 +80,13 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         size="icon"
       >
         <CameraIcon className="h-6 w-6" />
+      </Button>
+      <Button 
+        onClick={upload}
+        className="bg-transparent hover:bg-transparent absolute bottom-6 right-1 transform -translate-x-1/2 rounded-full"
+        size="icon"
+      >
+        <Upload className="h-6 w-6" />
       </Button>
     </div>
   );

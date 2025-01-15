@@ -79,10 +79,12 @@ const LandingPage: React.FC = () => {
                             Effortlessly <span className="underline">split bills with friends</span> using a shareable link.
                         </p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                            <Link to="/scan" className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                                <span>Scan Receipt</span>
-                                <ArrowRight className="h-5 w-5" />
-                            </Link>
+                            <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
+                                <Link to="/scan" className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    <span>Scan Receipt</span>
+                                    <ArrowRight className="h-5 w-5" />
+                                </Link>
+                            </div>
                             <a href="#features" className="flex items-center justify-center space-x-2 bg-white text-gray-900 px-8 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                                 How It Works
                             </a>
@@ -144,7 +146,7 @@ const LandingPage: React.FC = () => {
                                 <span className="text-xl font-bold text-gray-900">Bill Club</span>
                             </div>
                             <p className="text-gray-600 mb-4">
-                                The easiest way to split bills with your friends and family.
+                                The easiest way to split bills with your friends and friends.
                             </p>
                         </div>
                         
@@ -169,7 +171,7 @@ const LandingPage: React.FC = () => {
                     
                     <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center">
                         <p className="text-gray-600 text-sm">
-                            © {new Date().getFullYear()} Bill Splitter. All rights reserved.
+                            © {new Date().getFullYear()} Bill Club. All rights reserved.
                         </p>
                         <div className="flex space-x-4 mt-4 md:mt-0">
                             <a href="#" className="text-gray-400 hover:text-gray-600">

@@ -2,12 +2,25 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy } from 'lucide-react';
+import { Copy, MinusCircle, PlusCircle } from 'lucide-react';
+import { useSupabase } from '@/SupabaseContext';
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
   content: any;
 }
+
+// Type for Transaction
+type Transaction = {
+  businessName: string;
+  items: {
+    itemName: string;
+    itemCost: number;
+  }[];
+  tip?: number;
+  tax: number;
+  totalAfterTax: number;
+};
 
 const generateId = async (): Promise<string> => {
   try {
@@ -31,20 +44,89 @@ const generateId = async (): Promise<string> => {
 
 const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
   const [id, setId] = useState<string>('');
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
+  const [localContent, setLocalContent] = useState(content);
+  const supabase = useSupabase();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleRemoveItem = (index: number) => {
+    const updatedItems = localContent.items.filter((_, i) => i !== index);
+    setLocalContent({ ...localContent, items: updatedItems });
+  };
+
+  const handleItemChange = (index: number, field: string, value: string) => {
+    setLocalContent(prevContent => ({
+      ...prevContent,
+      items: prevContent.items.map((item, i) =>
+        i === index ? { ...item, [field]: field === 'itemCost' ? parseFloat(value) || 0 : value } : item
+      )
+    }));
+  };
+
+  const handleAddItem = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
+    const newItem = { itemName: '', itemCost: 0 };
+    setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
+    console.log("DATA");
     console.log(data);
-    // onSubmit(data);
 
     if (!shareablePageCreated) {
-      generateId().then((generatedId) => {
-        setId(generatedId);
-        setShareablePageCreated(true);
+      const generatedId = await generateId();
+      setId(generatedId);
+
+      // Create new transaction row in supabase
+      const { data: transactionData, error } = await supabase.from('transaction').insert({
+        id: generatedId,
+        date: new Date().toISOString(),
+        restaurant: data.vendor,
+        tip: data.tip,
+        tax: data.tax,
+        total: Number(data.totalAfterTax),
+        status: 'incomplete',
+        owner_id: '123'
       });
+
+      if (error) {
+        console.error('Error creating transaction:', error);
+      } else {
+        console.log('Transaction created successfully:', transactionData);
+
+        // Create new item rows in supabase that reference the transaction
+        const items = [];
+        let index = 0;
+        while (data[`itemName-${index}`] !== undefined) {
+          items.push({
+            transaction_id: generatedId,
+            itemName: data[`itemName-${index}`],
+            itemCost: Number(data[`itemCost-${index}`])
+          });
+          index++;
+        }
+
+        for (const item of items) {
+          const { data: itemsData, error: itemsError } = await supabase.from('item').insert({
+            transaction_id: generatedId,
+            item_name: item.itemName,
+            cost: item.itemCost,
+            quantity: 1,
+            owner_nickname: ''
+          });
+          if (itemsError) {
+            console.error('Error creating items:', itemsError);
+          } else {
+            console.log('Items created successfully:', itemsData);
+          }
+        }
+
+      }
+
+      setShareablePageCreated(true);
     }
   };
 
@@ -61,35 +143,69 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="vendor">Vendor</Label>
-        <Input id="vendor" name="vendor" defaultValue={content.businessName || "Pizzeria"} />
+        <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} />
       </div>
       
-      {content.items && content.items.map((item, index) => (
-        <div key={index} className="flex space-x-4">
+      {localContent.items && localContent.items.map((item, index) => (
+        <div key={`${item.itemName}-${index}`} className="flex space-x-4 items-center">
           <div className="flex-1 space-y-2">
             <Label htmlFor={`itemName-${index}`}>Item Name</Label>
-            <Input id={`itemName-${index}`} name={`itemName-${index}`} defaultValue={item.itemName} />
+            <Input
+              id={`itemName-${index}`}
+              name={`itemName-${index}`}
+              defaultValue={item.itemName}
+              onBlur={(e) => handleItemChange(index, 'itemName', e.target.value)}
+            />
           </div>
           <div className="flex-1 space-y-2">
             <Label htmlFor={`itemCost-${index}`}>Item Cost</Label>
-            <Input id={`itemCost-${index}`} name={`itemCost-${index}`} defaultValue={`$${item.itemCost.toFixed(2)}`} />
+            <Input
+              id={`itemCost-${index}`}
+              name={`itemCost-${index}`}
+              defaultValue={item.itemCost.toFixed(2)}
+              onBlur={(e) => handleItemChange(index, 'itemCost', e.target.value)}
+            />
           </div>
+          <button
+            onClick={() => handleRemoveItem(index)}
+            className="text-blue-500 hover:text-blue-600 flex items-center"
+          >
+            <MinusCircle size={20} />
+          </button>
         </div>
       ))}
-      
+
+      <Button 
+        onClick={handleAddItem} 
+        type="button"
+        className="w-full border border-blue-400 text-blue-400 hover:bg-blue-100 flex justify-center items-center bg-transparent"
+        style={{ height: 'auto' }}
+      >
+        <PlusCircle size={20} style={{ width: '20px', height: '20px' }} />
+      </Button>
+
       <div className="space-y-2">
-        <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
-        <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={`$${content.totalBeforeTax.toFixed(2)}`} />
+        <Label htmlFor="tax">Tax</Label>
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="tax" name="tax" defaultValue="0" className="pl-6" />
+        </div>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="totalAfterTax">Total After Tax</Label>
-        <Input id="totalAfterTax" name="totalAfterTax" defaultValue={`$${content.totalAfterTax.toFixed(2)}`} />
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="totalAfterTax" name="totalAfterTax" defaultValue={localContent.totalAfterTax.toFixed(2)} className="pl-6" />
+        </div>
       </div>
       
       <div className="space-y-2">
         <Label htmlFor="tip">Tip</Label>
-        <Input id="tip" name="tip" />
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="tip" name="tip" defaultValue="0" className="pl-6" />
+        </div>
       </div>
 
       <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Shareable Link</Button>
