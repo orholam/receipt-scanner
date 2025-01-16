@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +48,23 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
   const [localContent, setLocalContent] = useState(content);
   const [tax, setTax] = useState(content.tax || 0);
+  const [totalBeforeTax, setTotalBeforeTax] = useState<number | null>(content.totalBeforeTax || null);
+  const [totalAfterTax, setTotalAfterTax] = useState<number | null>(content.totalAfterTax || null);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [isSharableLinkDisabled, setIsSharableLinkDisabled] = useState<boolean>(true);
   const supabase = useSupabase();
+
+  useEffect(() => {
+    if (totalBeforeTax === null || totalAfterTax === null) {
+      setIsSharableLinkDisabled(true);
+    } else {
+      setIsSharableLinkDisabled(false);
+    }
+  }, [totalBeforeTax, totalAfterTax]);
+
+  useEffect(() => {
+    setIsButtonDisabled(totalBeforeTax <= 0 || totalAfterTax <= 0 || totalAfterTax  == undefined || totalBeforeTax == undefined);
+  }, [totalBeforeTax, totalAfterTax]);
 
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
@@ -144,6 +160,16 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setTax(parseFloat(e.target.value));
   };
 
+  const handleTotalBeforeTaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setTotalBeforeTax(isNaN(value) ? null : value);
+  };
+
+  const handleTotalAfterTaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setTotalAfterTax(isNaN(value) ? null : value);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -193,7 +219,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={localContent.totalBeforeTax.toFixed(2)} className="pl-6" />
+          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={totalBeforeTax?.toFixed(2) || ''} onChange={handleTotalBeforeTaxChange} className="pl-6" />
         </div>
       </div>
 
@@ -209,7 +235,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         <Label htmlFor="totalAfterTax">Total After Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="totalAfterTax" name="totalAfterTax" defaultValue={localContent.totalAfterTax.toFixed(2)} className="pl-6" />
+          <Input id="totalAfterTax" name="totalAfterTax" defaultValue={totalAfterTax?.toFixed(2) || ''} onChange={handleTotalAfterTaxChange} className="pl-6" />
         </div>
       </div>
       
@@ -221,7 +247,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       </div>
 
-      <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500">Shareable Link</Button>
+      <Button type="submit" className="w-full bg-blue-400 hover:bg-blue-500" disabled={isButtonDisabled}>Shareable Link</Button>
 
       {shareablePageCreated && (
         <div className="mt-4 text-center">
@@ -236,6 +262,9 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
           </div>
         </div>
       )}
+      <div className={`sharable-link ${isSharableLinkDisabled ? 'text-gray-500' : ''}`}>
+        Sharable Link
+      </div>
     </form>
   );
 };
