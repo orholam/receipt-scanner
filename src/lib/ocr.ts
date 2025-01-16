@@ -33,12 +33,20 @@ const tools = [
                           }
                       }
                   },
+                  "totalBeforeTax": {
+                      "type": "number",
+                      "description": "The total cost before tax."
+                  },
                   "totalAfterTax": {
                       "type": "number",
                       "description": "The total cost after tax."
+                  },
+                  "tax": {
+                      "type": "number",
+                      "description": "The tax amount."
                   }
               },
-              "required": ["businessName", "items", "totalBeforeTax", "totalAfterTax"],
+              "required": ["businessName", "items", "totalBeforeTax", "totalAfterTax", "tax"],
               "additionalProperties": false
           }
       }
@@ -90,7 +98,12 @@ export const performOcr = async (base64Image: string): Promise<OcrResult> => {
       return { error: "Failed to retrieve the expected data structure." }; // Return error if data structure is not as expected
     }
     const json = JSON.parse(raw_json);
-    return json; // Return the parsed JSON
+
+    if (json.totalAfterTax && json.tax) {
+      json.totalBeforeTax = json.totalAfterTax - json.tax;
+    }
+
+    return json; // Return the parsed JSON with totalBeforeTax
   } catch (error) {
     console.error('Error performing OCR:', error);
     return { error: error.message }; // Return the error message

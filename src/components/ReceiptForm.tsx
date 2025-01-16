@@ -42,11 +42,12 @@ const generateId = async (): Promise<string> => {
   }
 };
 
-const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
+const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [id, setId] = useState<string>('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
   const [localContent, setLocalContent] = useState(content);
+  const [tax, setTax] = useState(content.tax || 0);
   const supabase = useSupabase();
 
   const handleRemoveItem = (index: number) => {
@@ -139,6 +140,10 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
     });
   };
 
+  const handleTaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTax(parseFloat(e.target.value));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -185,10 +190,18 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ onSubmit, content }) => {
       </Button>
 
       <div className="space-y-2">
+        <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={localContent.totalBeforeTax.toFixed(2)} className="pl-6" />
+        </div>
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="tax">Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="tax" name="tax" defaultValue="0" className="pl-6" />
+          <Input id="tax" name="tax" defaultValue={tax.toFixed(2)} onChange={handleTaxChange} className="pl-6" />
         </div>
       </div>
 
