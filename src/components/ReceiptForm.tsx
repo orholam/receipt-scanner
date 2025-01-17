@@ -66,6 +66,20 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setIsButtonDisabled(totalBeforeTax <= 0 || totalAfterTax <= 0 || totalAfterTax  == undefined || totalBeforeTax == undefined);
   }, [totalBeforeTax, totalAfterTax]);
 
+  useEffect(() => {
+    if (tax !== null && totalAfterTax !== null) {
+      const calculatedTotalBeforeTax = totalAfterTax - tax;
+      setTotalBeforeTax(calculatedTotalBeforeTax);
+    }
+  }, [tax, totalAfterTax]);
+
+  useEffect(() => {
+    if (totalBeforeTax !== null && totalAfterTax !== null) {
+      const calculatedTax = totalAfterTax - totalBeforeTax;
+      setTax(calculatedTax);
+    }
+  }, [totalBeforeTax, totalAfterTax]);
+
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
     setLocalContent({ ...localContent, items: updatedItems });
@@ -170,6 +184,13 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setTotalAfterTax(isNaN(value) ? null : value);
   };
 
+  const handleAutoCalculate = () => {
+    if (tax !== null && totalAfterTax !== null) {
+      const calculatedTotalBeforeTax = totalAfterTax - tax;
+      setTotalBeforeTax(calculatedTotalBeforeTax);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -219,7 +240,16 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="totalBeforeTax" name="totalBeforeTax" defaultValue={totalBeforeTax?.toFixed(2) || ''} onChange={handleTotalBeforeTaxChange} className="pl-6" />
+          <Input 
+            id="totalBeforeTax" 
+            name="totalBeforeTax" 
+            value={totalBeforeTax !== null ? totalBeforeTax.toString() : ''} 
+            onChange={(e) => {
+              const value = e.target.value;
+              setTotalBeforeTax(value === '' ? null : parseFloat(value));
+            }} 
+            className="pl-6" 
+          />
         </div>
       </div>
 
@@ -227,7 +257,16 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         <Label htmlFor="tax">Tax</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input id="tax" name="tax" defaultValue={tax.toFixed(2)} onChange={handleTaxChange} className="pl-6" />
+          <Input 
+            id="tax" 
+            name="tax" 
+            value={tax !== null ? tax.toString() : ''} 
+            onChange={(e) => {
+              const value = e.target.value;
+              setTax(value === '' ? null : parseFloat(value));
+            }} 
+            className="pl-6" 
+          />
         </div>
       </div>
 
