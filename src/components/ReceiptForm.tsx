@@ -42,6 +42,12 @@ const generateId = async (): Promise<string> => {
   }
 };
 
+const preventEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+  }
+};
+
 const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [id, setId] = useState<string>('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);
@@ -56,7 +62,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const supabase = useSupabase();
 
   useEffect(() => {
-    if (totalBeforeTax === null || totalAfterTax === null || tax < 0) {
+    if (totalBeforeTax === null || totalAfterTax === null || tax < 0 || totalAfterTax < totalBeforeTax) {
       setIsSharableLinkDisabled(true);
     } else {
       setIsSharableLinkDisabled(false);
@@ -68,10 +74,11 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setTotalBeforeTax(parseFloat(totalItemCosts.toFixed(2)));
     setIsButtonDisabled(
       totalAfterTax <= 0 || 
-      totalAfterTax == undefined || 
-      totalItemCosts !== totalBeforeTax
+      totalAfterTax === undefined || 
+      totalItemCosts !== totalBeforeTax || 
+      totalAfterTax < totalBeforeTax
     );
-  }, [localContent.items, totalAfterTax]);
+  }, [localContent.items, totalAfterTax, totalBeforeTax]);
 
   useEffect(() => {
     if (totalBeforeTax !== null && totalAfterTax !== null) {
@@ -180,7 +187,13 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   const handleTaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setTax(value === '' ? null : parseFloat(value));
+    const parsedTax = value === '' ? null : parseFloat(value);
+    setTax(parsedTax);
+
+    if (parsedTax !== null && totalBeforeTax !== null) {
+      const calculatedTotalAfterTax = parseFloat((totalBeforeTax + parsedTax).toFixed(2));
+      setTotalAfterTax(calculatedTotalAfterTax);
+    }
   };
 
   const handleTotalBeforeTaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,6 +240,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               name={`itemName-${index}`}
               defaultValue={item.itemName}
               onBlur={(e) => handleItemChange(index, 'itemName', e.target.value)}
+              onKeyDown={preventEnterKey}
             />
           </div>
           <div className="flex-1 space-y-2">
@@ -236,6 +250,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               name={`itemCost-${index}`}
               defaultValue={item.itemCost.toFixed(2)}
               onBlur={(e) => handleItemChange(index, 'itemCost', e.target.value)}
+              onKeyDown={preventEnterKey}
             />
           </div>
           <button
@@ -268,6 +283,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             type="number" 
             step="0.01" 
             readOnly 
+            onKeyDown={preventEnterKey} 
           />
         </div>
       </div>
@@ -281,6 +297,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             name="tax" 
             value={tax !== null ? tax.toString() : ''} 
             onChange={handleTaxChange} 
+            onKeyDown={preventEnterKey} 
             className="pl-6" 
             type="number" 
             step="0.01" 
@@ -297,6 +314,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             name="totalAfterTax" 
             value={totalAfterTax !== null ? totalAfterTax.toString() : ''} 
             onChange={handleTotalAfterTaxChange} 
+            onKeyDown={preventEnterKey} 
             className="pl-6" 
             type="number" 
             step="0.01" 
@@ -316,6 +334,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             type="number" 
             step="0.01" 
             onChange={handleTipChange}
+            onKeyDown={preventEnterKey} 
           />
         </div>
       </div>
