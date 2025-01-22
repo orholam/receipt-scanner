@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSupabase } from '@/SupabaseContext';
+import { X } from 'lucide-react';
 
 const calcTaxTipTotalShare = (totalAfterTax: number, tax: number, tip: number, individualPreTax: number) => {
   const totalPreTax = totalAfterTax - tax;
@@ -138,6 +139,21 @@ const Shareable = () => {
     }
   };
 
+  const unclaimAllItems = async () => {
+    const { data, error } = await supabase
+      .from('item')
+      .update({ owner_nickname: null })
+      .eq('transaction_id', id)
+      .eq('owner_nickname', nickname);
+    if (error) {
+      console.error('Error unclaiming items:', error);
+      setError('Error unclaiming items');
+    } else {
+      console.log('Items unclaimed successfully:', data);
+      fetchItems();
+    }
+  };
+
   return (
     <div className="flex flex-col flex-grow items-center justify-center bg-gradient-to-b from-indigo-100 to-white pmd:p-8 mx-4 my-4 rounded-lg mb-10">
       <div className="absolute inset-x-0 -top-60 transform-gpu overflow-hidden blur-3xl sm:-top-96">
@@ -190,6 +206,11 @@ const Shareable = () => {
                         <p className="text-sm">Tax: <span className="font-medium">${individualTotals[item].individualTax}</span></p>
                         <p className="text-sm">Tip: <span className="font-medium">${individualTotals[item].individualTip}</span></p>
                         <p className="text-sm"><b>Total:</b> <span className="font-bold">${individualTotals[item].individualTotal}</span></p>
+                        {nickname && nickname === item && (
+                          <div className="flex justify-end">
+                            <X className="h-4 w-4 cursor-pointer" onClick={() => unclaimAllItems()} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </>

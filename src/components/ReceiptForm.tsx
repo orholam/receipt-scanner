@@ -279,7 +279,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             id="totalBeforeTax" 
             name="totalBeforeTax" 
             value={totalBeforeTax !== null ? totalBeforeTax.toString() : ''} 
-            className="pl-6 bg-gray-300" 
+            className="pl-6 bg-gray-300 appearance-none" 
             type="number" 
             step="0.01" 
             readOnly 
@@ -354,9 +354,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
           </div>
         </div>
       )}
-      <div className={`sharable-link ${isSharableLinkDisabled ? 'text-gray-500' : ''}`}>
-        Sharable Link
-      </div>
+
     </form>
   );
 };
