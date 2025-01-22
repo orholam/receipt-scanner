@@ -63,15 +63,6 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
 
   return (
     <div className="relative">
-      {/* Navigation */}
-      <nav className={`max-w-7xl mx-auto px-6 py-6 fixed top-0 left-0 right-0 transition-all duration-300 ${hasScrolled ? 'bg-white bg-opacity-30 backdrop-blur-lg' : 'bg-transparent'} rounded-lg z-50`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Zap className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold">BILL CLUB</h1>
-          </div>
-        </div>
-      </nav>
 
       <div className="camera-container shadow-lg bg-white p-4">
         <Webcam
