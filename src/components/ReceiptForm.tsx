@@ -294,7 +294,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tax">Tax</Label>
+        <Label htmlFor="taxFees">Tax/Fees</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
           <Input 
