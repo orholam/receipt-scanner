@@ -59,6 +59,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [tip, setTip] = useState<number | null>(content.tip || 0);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [isSharableLinkDisabled, setIsSharableLinkDisabled] = useState<boolean>(true);
+  const [formChanged, setFormChanged] = useState<boolean>(false);
   const supabase = useSupabase();
 
   useEffect(() => {
@@ -95,6 +96,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     }
   }, [totalBeforeTax, totalAfterTax, tax]);
 
+  useEffect(() => {
+    setFormChanged(true);
+  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip]);
+
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
     setLocalContent({ ...localContent, items: updatedItems });
@@ -122,7 +127,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     console.log("DATA");
     console.log(data);
 
-    if (!shareablePageCreated) {
+    if (formChanged) {
       const generatedId = await generateId();
       setId(generatedId);
 
@@ -169,10 +174,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             console.log('Items created successfully:', itemsData);
           }
         }
-
       }
 
       setShareablePageCreated(true);
+      setFormChanged(false);
     }
   };
 
@@ -289,7 +294,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tax">Tax</Label>
+        <Label htmlFor="taxFees">Tax/Fees</Label>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
           <Input 
