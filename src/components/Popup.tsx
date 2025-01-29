@@ -4,11 +4,11 @@ import { X } from "lucide-react";
 
 const Popup = ( { onClose, onTrySample }: { onClose: () => void, onTrySample: () => void } ) => {
     return (
-        <div className="flex items-center justify-between bg-gray-100 rounded-xl p-4 z-50">
+        <div className="flex gap-2 items-center justify-between bg-gray-100 rounded-xl p-4 z-50">
             <div className="flex items-center">
                 <img src={undrawReceipt} alt="Sample Receipt" className="w-12 h-12 mr-4" />
                 <div>
-                    <h1 className="text-lg font-semibold">First time here?</h1>
+                    <h1 className="text-lg font-semibold">First time?</h1>
                     <p className="text-sm">Try it out with a sample receipt</p>
                 </div>
             </div>
