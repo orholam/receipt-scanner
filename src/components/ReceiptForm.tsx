@@ -60,6 +60,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [isSharableLinkDisabled, setIsSharableLinkDisabled] = useState<boolean>(true);
   const [formChanged, setFormChanged] = useState<boolean>(false);
+  const [tipPercentage, setTipPercentage] = useState<number | null>(null);
   const supabase = useSupabase();
 
   useEffect(() => {
@@ -329,6 +330,13 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       
       <div className="space-y-2">
         <Label htmlFor="tip">Tip</Label>
+        <div className="flex flex-row items-center gap-1">
+          <Button type="button" onClick={() => {setTip(0); setTipPercentage(0)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0 ? '#D5E6FF' : '' }}>0%</Button>
+          <Button type="button" onClick={() => {setTip(parseFloat((.05*totalAfterTax).toFixed(2))); setTipPercentage(0.05)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.05 ? '#D5E6FF' : '' }}>5%</Button>
+          <Button type="button" onClick={() => {setTip(parseFloat((.10*totalAfterTax).toFixed(2))); setTipPercentage(0.10)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.10 ? '#D5E6FF' : '' }}>10%</Button>
+          <Button type="button" onClick={() => {setTip(parseFloat((.15*totalAfterTax).toFixed(2))); setTipPercentage(0.15)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.15 ? '#D5E6FF' : '' }}>15%</Button>
+          <Button type="button" onClick={() => {setTip(parseFloat((.20*totalAfterTax).toFixed(2))); setTipPercentage(0.20)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.20 ? '#D5E6FF' : '' }}>20%</Button>
+        </div>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
           <Input 
