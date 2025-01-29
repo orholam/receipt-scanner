@@ -6,6 +6,8 @@ import { performOcr } from '@/lib/ocr';
 import { toast } from "sonner";
 import { RotateCcw, Edit, Save } from 'lucide-react';
 import Header from '@/components/Header';
+import Popup from '@/components/Popup';
+import sampleReceipt from '../assets/sample_receipt.jpg';
 import {
   Dialog,
   DialogContent,
@@ -35,13 +37,13 @@ const Index = () => {
   const [isScanning, setIsScanning] = useState(true);
   const [isOcrComplete, setIsOcrComplete] = useState(false);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
-
+  const [isPopupOpen, setIsPopupOpen] = useState(true);
   useEffect(() => {
-    const savedImage = localStorage.getItem('capturedReceipt');
-    if (savedImage) {
-      setCapturedImage(savedImage);
-      setIsScanning(false);
-    }
+    // const savedImage = localStorage.getItem('capturedReceipt');
+    // if (savedImage) {
+    //   setCapturedImage(savedImage);
+    //   setIsScanning(false);
+    // }
   }, []);
 
   const handleCapture = async (image: string) => {
@@ -61,6 +63,34 @@ const Index = () => {
         toast.error('An error occurred while capturing the receipt. Please try again.');
     }
   };
+
+  const handleTrySample = async () => {
+    setIsPopupOpen(false);
+    setIsScanning(false);
+    localStorage.setItem('capturedReceipt', sampleReceipt);
+
+    // Fetch the image if sampleReceipt is a URL
+    const response = await fetch(sampleReceipt);
+    const blob = await response.blob();
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const imageSrc = reader.result as string;
+      setCapturedImage(imageSrc);
+      localStorage.setItem('capturedReceipt', imageSrc);
+
+      try {
+        const result = await performOcr(imageSrc);
+        setOcrResult(result);
+        setIsOcrComplete(true);
+        toast.success("Sample receipt processed successfully!");
+      } catch (error) {
+        console.error('Error during OCR:', error);
+        toast.error('An error occurred while processing the sample receipt. Please try again.');
+      }
+    };
+    reader.readAsDataURL(blob);
+  }
 
   const handleReset = () => {
     setCapturedImage(null);
@@ -136,6 +166,7 @@ const Index = () => {
             </>
           )}
         </div>
+        {isPopupOpen && <Popup onClose={() => setIsPopupOpen(false) } onTrySample={handleTrySample} />}
       </div>
     </div>
   );
