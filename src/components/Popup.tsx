@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 
 const Popup = ( { onClose, onTrySample }: { onClose: () => void, onTrySample: () => void } ) => {
     return (
-        <div className="flex gap-1 items-center justify-between bg-gray-100 rounded-xl p-4 z-50">
+        <div className="flex gap-1 items-center justify-between bg-gray-100 rounded-xl p-4 z-50 pr-1">
             <div className="flex items-center">
                 <img src={undrawReceipt} alt="Sample Receipt" className="w-12 h-12 mr-4" />
                 <div>
