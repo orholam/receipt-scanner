@@ -160,11 +160,10 @@ const LandingPage: React.FC = () => {
                         </div>
                         
                         <div>
-                            <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
+                            <h3 className="font-semibold text-gray-900 mb-4">About</h3>
                             <ul className="space-y-2">
-                                <li><a href="#about" className="text-gray-600 hover:text-gray-900">About</a></li>
-                                <li><a href="#contact" className="text-gray-600 hover:text-gray-900">Contact</a></li>
-                                <li><a href="#privacy" className="text-gray-600 hover:text-gray-900">Privacy</a></li>
+                                <li><a href="/about" className="text-gray-600 hover:text-gray-900">The Vision</a></li>
+                                <li><a href="https://x.com/jonwentel" className="text-gray-600 hover:text-gray-900">A project by <b>The Build Collective</b></a></li>
                             </ul>
                         </div>
                     </div>
@@ -177,7 +176,7 @@ const LandingPage: React.FC = () => {
                             <a href="#" className="text-gray-400 hover:text-gray-600">
                                 <Github className="h-5 w-5" />
                             </a>
-                            <a href="#" className="text-gray-400 hover:text-gray-600">
+                            <a href="https://x.com/jonwentel" className="text-gray-400 hover:text-gray-600">
                                 <Twitter className="h-5 w-5" />
                             </a>
                             <a href="#" className="text-gray-400 hover:text-gray-600">
