@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Star, Shield, Zap, Github, Twitter, Linkedin } from 'lucide-react';
-import appScreenshot from '../assets/billclub8.jpg';
+import appScreenshot from '../assets/billclub9.jpg';
 import appScreenshot2 from '../assets/billclub2.jpg';
 import appScreenshot3 from '../assets/billclub5.jpg';
 import { Link } from 'react-router-dom';
@@ -63,7 +63,7 @@ const LandingPage: React.FC = () => {
                             <img
                                 src={appScreenshot}
                                 alt="App Screenshot"
-                                className="relative rounded-2xl shadow-2xl w-full border-8 border-white"
+                                className="relative rounded-2xl shadow-2xl w-full border-10 border-gray-800"
                             />
                         </div>
                     </div>
