@@ -155,7 +155,7 @@ const LandingPage: React.FC = () => {
                             <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
                             <ul className="space-y-2">
                                 <li><a href="#features" className="text-gray-600 hover:text-gray-900">Features</a></li>
-                                <li><p onClick={() => setPricingToggle(!pricingToggle)} className="text-gray-600 hover:text-gray-900">Pricing{pricingToggle && "... it's free, chill"}</p></li>
+                                <li><p onClick={() => setPricingToggle(!pricingToggle)} className="text-gray-600 hover:text-gray-900 cursor-pointer">Pricing{pricingToggle && "... it's free, chill"}</p></li>
                                 <li><a href="#testimonials" className="text-gray-600 hover:text-gray-900">Testimonials</a></li>
                             </ul>
                         </div>
