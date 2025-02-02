@@ -99,6 +99,12 @@ export const performOcr = async (base64Image: string): Promise<OcrResult> => {
     }
     const json = JSON.parse(raw_json);
 
+    // Ensure item costs are parsed correctly
+    json.items = json.items.map((item: any) => ({
+      ...item,
+      itemCost: parseFloat(item.itemCost)
+    }));
+
     if (json.totalAfterTax && json.tax) {
       json.totalBeforeTax = json.totalAfterTax - json.tax;
     }
