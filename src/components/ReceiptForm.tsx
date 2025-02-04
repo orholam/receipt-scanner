@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, MinusCircle, PlusCircle } from 'lucide-react';
+import { Copy, MinusCircle, PlusCircle, Split } from 'lucide-react';
 import { useSupabase } from '@/SupabaseContext';
 
 interface ReceiptFormProps {
@@ -73,14 +73,15 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   useEffect(() => {
     const totalItemCosts = localContent.items.reduce((sum, item) => sum + item.itemCost, 0);
+    const hasNegativeItemCost = localContent.items.some(item => item.itemCost < 0);
     setTotalBeforeTax(parseFloat(totalItemCosts.toFixed(2)));
     setIsButtonDisabled(
       totalAfterTax <= 0 || 
       totalAfterTax === undefined || 
-      totalItemCosts !== totalBeforeTax || 
-      totalAfterTax < totalBeforeTax
+      totalAfterTax < totalBeforeTax || 
+      hasNegativeItemCost
     );
-  }, [localContent.items, totalAfterTax, totalBeforeTax]);
+  }, [localContent.items.map(item => item.itemCost), totalAfterTax, totalBeforeTax]);
 
   useEffect(() => {
     if (totalBeforeTax !== null && totalAfterTax !== null) {
@@ -101,24 +102,53 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setFormChanged(true);
   }, [localContent, tax, totalBeforeTax, totalAfterTax, tip]);
 
+  useEffect(() => {
+    setLocalContent(content);
+    setTax(content.tax || 0);
+    setTotalBeforeTax(content.totalBeforeTax || null);
+    setTotalAfterTax(content.totalAfterTax || null);
+    setTip(content.tip || 0);
+  }, [content]);
+
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
     setLocalContent({ ...localContent, items: updatedItems });
+    setFormChanged(true); // Ensure formChanged is set to true
   };
 
   const handleItemChange = (index: number, field: string, value: string) => {
-    setLocalContent(prevContent => ({
-      ...prevContent,
-      items: prevContent.items.map((item, i) =>
+    setLocalContent(prevContent => {
+      const updatedItems = prevContent.items.map((item, i) =>
         i === index ? { ...item, [field]: field === 'itemCost' ? parseFloat(value) || 0 : value } : item
-      )
-    }));
+      );
+      return { ...prevContent, items: updatedItems };
+    });
+    setFormChanged(true); // Ensure formChanged is set to true
   };
 
   const handleAddItem = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent form submission
     const newItem = { itemName: '', itemCost: 0 };
     setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
+  };
+
+  const handleSplitItem = (index: number) => {
+    const splitCount = prompt('Enter the number of splits:', '2');
+    if (splitCount !== null && parseInt(splitCount, 10) > 1) {
+      const itemToSplit = localContent.items[index];
+      const splitCountInt = parseInt(splitCount, 10);
+      const newItems = Array.from({ length: splitCountInt }, (_, i) => ({
+        itemName: `${itemToSplit.itemName} (${i + 1})`,
+        itemCost: parseFloat((itemToSplit.itemCost / splitCountInt).toFixed(2))
+      }));
+      let updatedItems = [
+        ...localContent.items.slice(0, index),
+        ...localContent.items.slice(index + 1),
+        ...newItems
+      ];
+      setLocalContent({ ...localContent, items: updatedItems });
+      setFormChanged(true); // Ensure formChanged is set to true
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -265,6 +295,12 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
           >
             <MinusCircle size={20} />
           </button>
+          <button
+            onClick={() => handleSplitItem(index)}
+            className="text-blue-500 hover:text-blue-600 flex items-center"
+          >
+            <Split size={20} />
+          </button>
         </div>
       ))}
 
@@ -332,10 +368,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         <Label htmlFor="tip">Tip</Label>
         <div className="flex flex-row items-center gap-1">
           <Button type="button" onClick={() => {setTip(0); setTipPercentage(0)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0 ? '#D5E6FF' : '' }}>0%</Button>
-          <Button type="button" onClick={() => {setTip(parseFloat((.05*totalAfterTax).toFixed(2))); setTipPercentage(0.05)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.05 ? '#D5E6FF' : '' }}>5%</Button>
-          <Button type="button" onClick={() => {setTip(parseFloat((.10*totalAfterTax).toFixed(2))); setTipPercentage(0.10)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.10 ? '#D5E6FF' : '' }}>10%</Button>
           <Button type="button" onClick={() => {setTip(parseFloat((.15*totalAfterTax).toFixed(2))); setTipPercentage(0.15)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.15 ? '#D5E6FF' : '' }}>15%</Button>
+          <Button type="button" onClick={() => {setTip(parseFloat((.18*totalAfterTax).toFixed(2))); setTipPercentage(0.18)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.18 ? '#D5E6FF' : '' }}>18%</Button>
           <Button type="button" onClick={() => {setTip(parseFloat((.20*totalAfterTax).toFixed(2))); setTipPercentage(0.20)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.20 ? '#D5E6FF' : '' }}>20%</Button>
+          <Button type="button" onClick={() => {setTip(parseFloat((.22*totalAfterTax).toFixed(2))); setTipPercentage(0.22)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.22 ? '#D5E6FF' : '' }}>22%</Button>
         </div>
         <div className="relative">
           <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
