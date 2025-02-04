@@ -73,14 +73,15 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   useEffect(() => {
     const totalItemCosts = localContent.items.reduce((sum, item) => sum + item.itemCost, 0);
+    const hasNegativeItemCost = localContent.items.some(item => item.itemCost < 0);
     setTotalBeforeTax(parseFloat(totalItemCosts.toFixed(2)));
     setIsButtonDisabled(
       totalAfterTax <= 0 || 
       totalAfterTax === undefined || 
-      totalItemCosts !== totalBeforeTax || 
-      totalAfterTax < totalBeforeTax
+      totalAfterTax < totalBeforeTax || 
+      hasNegativeItemCost
     );
-  }, [localContent.items, totalAfterTax, totalBeforeTax]);
+  }, [localContent.items.map(item => item.itemCost), totalAfterTax, totalBeforeTax]);
 
   useEffect(() => {
     if (totalBeforeTax !== null && totalAfterTax !== null) {
@@ -112,6 +113,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
     setLocalContent({ ...localContent, items: updatedItems });
+    setFormChanged(true); // Ensure formChanged is set to true
   };
 
   const handleItemChange = (index: number, field: string, value: string) => {
@@ -133,14 +135,13 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const handleSplitItem = (index: number) => {
     const splitCount = prompt('Enter the number of splits:', '2');
     if (splitCount !== null && parseInt(splitCount, 10) > 1) {
-      handleRemoveItem(index);
       const itemToSplit = localContent.items[index];
       const splitCountInt = parseInt(splitCount, 10);
-      const newItems = Array.from({ length: splitCountInt }, () => ({
-        itemName: itemToSplit.itemName,
+      const newItems = Array.from({ length: splitCountInt }, (_, i) => ({
+        itemName: `${itemToSplit.itemName} (${i + 1})`,
         itemCost: parseFloat((itemToSplit.itemCost / splitCountInt).toFixed(2))
       }));
-      const updatedItems = [
+      let updatedItems = [
         ...localContent.items.slice(0, index),
         ...localContent.items.slice(index + 1),
         ...newItems
