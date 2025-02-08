@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, MinusCircle, PlusCircle, Split } from 'lucide-react';
 import { useSupabase } from '@/SupabaseContext';
+import { Modal, Box, TextField } from '@mui/material';
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
@@ -61,6 +62,9 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [isSharableLinkDisabled, setIsSharableLinkDisabled] = useState<boolean>(true);
   const [formChanged, setFormChanged] = useState<boolean>(false);
   const [tipPercentage, setTipPercentage] = useState<number | null>(null);
+  const [splitModalOpen, setSplitModalOpen] = useState(false);
+  const [splitIndex, setSplitIndex] = useState<number | null>(null);
+  const [splitCount, setSplitCount] = useState(2);
   const supabase = useSupabase();
 
   useEffect(() => {
@@ -133,22 +137,26 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   };
 
   const handleSplitItem = (index: number) => {
-    const splitCount = prompt('Enter the number of splits:', '2');
-    if (splitCount !== null && parseInt(splitCount, 10) > 1) {
-      const itemToSplit = localContent.items[index];
-      const splitCountInt = parseInt(splitCount, 10);
-      const newItems = Array.from({ length: splitCountInt }, (_, i) => ({
+    setSplitIndex(index);
+    setSplitModalOpen(true);
+  };
+
+  const handleSplitConfirm = () => {
+    if (splitIndex !== null && splitCount > 1) {
+      const itemToSplit = localContent.items[splitIndex];
+      const newItems = Array.from({ length: splitCount }, (_, i) => ({
         itemName: `${itemToSplit.itemName} (${i + 1})`,
-        itemCost: parseFloat((itemToSplit.itemCost / splitCountInt).toFixed(2))
+        itemCost: parseFloat((itemToSplit.itemCost / splitCount).toFixed(2))
       }));
       let updatedItems = [
-        ...localContent.items.slice(0, index),
-        ...localContent.items.slice(index + 1),
+        ...localContent.items.slice(0, splitIndex),
+        ...localContent.items.slice(splitIndex + 1),
         ...newItems
       ];
       setLocalContent({ ...localContent, items: updatedItems });
       setFormChanged(true); // Ensure formChanged is set to true
     }
+    setSplitModalOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -404,8 +412,42 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       )}
 
+      <Modal
+        open={splitModalOpen}
+        onClose={() => setSplitModalOpen(false)}
+        aria-labelledby="split-modal-title"
+        aria-describedby="split-modal-description"
+      >
+        <Box sx={{ ...modalStyle }}>
+          <h2 id="split-modal-title">Split Item</h2>
+          <div className="flex items-center space-x-2">
+            <TextField
+              label="Number of splits"
+              type="number"
+              value={splitCount}
+              onChange={(e) => setSplitCount(parseInt(e.target.value, 10))}
+              inputProps={{ min: 2 }}
+            />
+            <Button onClick={handleSplitConfirm}>Confirm</Button>
+          </div>
+          <Button onClick={() => setSplitModalOpen(false)} className="mt-2">Cancel</Button>
+        </Box>
+      </Modal>
+
     </form>
   );
+};
+
+const modalStyle = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
 };
 
 export default ReceiptForm;
