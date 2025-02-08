@@ -132,7 +132,8 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
   };
 
-  const handleSplitItem = (index: number) => {
+  const handleSplitItem = (index: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
     const splitCount = prompt('Enter the number of splits:', '2');
     if (splitCount !== null && parseInt(splitCount, 10) > 1) {
       const itemToSplit = localContent.items[index];
@@ -296,7 +297,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             <MinusCircle size={20} />
           </button>
           <button
-            onClick={() => handleSplitItem(index)}
+            onClick={(e) => handleSplitItem(index, e)}
             className="text-blue-500 hover:text-blue-600 flex items-center"
           >
             <Split size={20} />
@@ -388,7 +389,13 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       </div>
 
-      <Button type="submit" className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isButtonDisabled}>Shareable Link</Button>
+      <Button 
+        type="submit" 
+        className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
+        disabled={isButtonDisabled}
+      >
+        Shareable Link
+      </Button>
 
       {shareablePageCreated && (
         <div className="mt-4 text-center">
