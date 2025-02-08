@@ -48,6 +48,18 @@ const preventEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
   }
 };
 
+const preventMinusSymbol = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === '-') {
+    e.preventDefault();
+  }
+};
+
+const preventAlphabet = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (/[a-zA-Z]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete') {
+    e.preventDefault();
+  }
+};
+
 const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [id, setId] = useState<string>('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);
@@ -61,6 +73,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [isSharableLinkDisabled, setIsSharableLinkDisabled] = useState<boolean>(true);
   const [formChanged, setFormChanged] = useState<boolean>(false);
   const [tipPercentage, setTipPercentage] = useState<number | null>(null);
+  const [grandTotal, setGrandTotal] = useState<number | null>(null);
   const supabase = useSupabase();
 
   useEffect(() => {
@@ -110,6 +123,16 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setTip(content.tip || 0);
   }, [content]);
 
+  useEffect(() => {
+    if (totalAfterTax !== null && tip !== null) {
+      setGrandTotal(parseFloat((totalAfterTax + tip).toFixed(2)));
+    } else if (totalAfterTax !== null) {
+      setGrandTotal(totalAfterTax);
+    } else {
+      setGrandTotal(null);
+    }
+  }, [totalAfterTax, tip]);
+
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
     setLocalContent({ ...localContent, items: updatedItems });
@@ -132,7 +155,8 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
   };
 
-  const handleSplitItem = (index: number) => {
+  const handleSplitItem = (index: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
     const splitCount = prompt('Enter the number of splits:', '2');
     if (splitCount !== null && parseInt(splitCount, 10) > 1) {
       const itemToSplit = localContent.items[index];
@@ -286,7 +310,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               name={`itemCost-${index}`}
               defaultValue={item.itemCost.toFixed(2)}
               onBlur={(e) => handleItemChange(index, 'itemCost', e.target.value)}
-              onKeyDown={preventEnterKey}
+              onKeyDown={(e) => { preventEnterKey(e); preventMinusSymbol(e); preventAlphabet(e); }}
             />
           </div>
           <button
@@ -296,7 +320,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             <MinusCircle size={20} />
           </button>
           <button
-            onClick={() => handleSplitItem(index)}
+            onClick={(e) => handleSplitItem(index, e)}
             className="text-blue-500 hover:text-blue-600 flex items-center"
           >
             <Split size={20} />
@@ -388,7 +412,32 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       </div>
 
-      <Button type="submit" className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isButtonDisabled}>Shareable Link</Button>
+      <hr className="my-4 border-gray-500" />
+
+      <div className="space-y-2 mt-6">
+        <Label htmlFor="grandTotal" className="text-xl">Grand Total</Label>
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+          <p className="pl-6 py-2 text-2xl">{grandTotal !== null ? grandTotal.toFixed(2) : ''}</p>
+        </div>
+      </div>
+
+      <Button 
+        type="submit" 
+        className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
+        disabled={isButtonDisabled}
+      >
+        Shareable Link
+      </Button>
+
+      {isButtonDisabled && (
+        <p className="text-red-500 text-sm mt-2 text-center">
+          {totalAfterTax <= 0 ? 'Total after tax cannot be negative' : 
+           totalAfterTax < totalBeforeTax ? 'Tax cannot be negative' : 
+           tax < 0 ? 'Tax cannot be negative.' : 
+           'Please ensure all item costs are non-negative and total after tax is valid.'}
+        </p>
+      )}
 
       {shareablePageCreated && (
         <div className="mt-4 text-center">
