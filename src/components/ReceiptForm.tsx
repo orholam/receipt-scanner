@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, MinusCircle, PlusCircle, Split } from 'lucide-react';
 import { useSupabase } from '@/SupabaseContext';
+import { Switch } from "@/components/ui/switch";
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
@@ -20,6 +21,7 @@ type Transaction = {
   tip?: number;
   tax: number;
   totalAfterTax: number;
+  venmoUsername?: string;
 };
 
 const generateId = async (): Promise<string> => {
@@ -74,6 +76,8 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [formChanged, setFormChanged] = useState<boolean>(false);
   const [tipPercentage, setTipPercentage] = useState<number | null>(null);
   const [grandTotal, setGrandTotal] = useState<number | null>(null);
+  const [venmoUsername, setVenmoUsername] = useState<string | null>(null);
+  const [useVenmo, setUseVenmo] = useState<boolean>(false);
   const supabase = useSupabase();
 
   useEffect(() => {
@@ -194,6 +198,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         tip: data.tip,
         tax: data.tax,
         total: Number(data.totalAfterTax),
+        venmo: data.venmoUsername,
         status: 'incomplete',
         owner_id: '123'
       });
@@ -337,78 +342,109 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         <PlusCircle size={20} style={{ width: '20px', height: '20px' }} />
       </Button>
 
-      <div className="space-y-2">
-        <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input 
-            id="totalBeforeTax" 
-            name="totalBeforeTax" 
-            value={totalBeforeTax !== null ? totalBeforeTax.toString() : ''} 
-            className="pl-6 bg-gray-300 appearance-none" 
-            type="number" 
-            step="0.01" 
-            readOnly 
-            onKeyDown={preventEnterKey} 
-          />
+      <div id="totals" className="space-y-2 bg-gradient-to-b from-blue-50 to-white shadow-lg rounded-lg p-4">
+        <div className="space-y-2">
+          <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+            <Input 
+              id="totalBeforeTax" 
+              name="totalBeforeTax" 
+              value={totalBeforeTax !== null ? totalBeforeTax.toString() : ''} 
+              className="pl-6 bg-gray-300 appearance-none" 
+              type="number" 
+              step="0.01" 
+              readOnly 
+              onKeyDown={preventEnterKey} 
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="taxFees">Tax/Fees</Label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+            <Input 
+              id="tax" 
+              name="tax" 
+              value={tax !== null ? tax.toString() : ''} 
+              onChange={handleTaxChange} 
+              onKeyDown={preventEnterKey} 
+              className="pl-6" 
+              type="number" 
+              step="0.01" 
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="totalAfterTax">Total After Tax</Label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+            <Input 
+              id="totalAfterTax" 
+              name="totalAfterTax" 
+              value={totalAfterTax !== null ? totalAfterTax.toString() : ''} 
+              onChange={handleTotalAfterTaxChange} 
+              onKeyDown={preventEnterKey} 
+              className="pl-6" 
+              type="number" 
+              step="0.01" 
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="tip">Tip</Label>
+          <div className="flex flex-row items-center gap-1">
+            <Button type="button" onClick={() => {setTip(0); setTipPercentage(0)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0 ? '#D5E6FF' : '' }}>0%</Button>
+            <Button type="button" onClick={() => {setTip(parseFloat((.15*totalAfterTax).toFixed(2))); setTipPercentage(0.15)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.15 ? '#D5E6FF' : '' }}>15%</Button>
+            <Button type="button" onClick={() => {setTip(parseFloat((.18*totalAfterTax).toFixed(2))); setTipPercentage(0.18)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.18 ? '#D5E6FF' : '' }}>18%</Button>
+            <Button type="button" onClick={() => {setTip(parseFloat((.20*totalAfterTax).toFixed(2))); setTipPercentage(0.20)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.20 ? '#D5E6FF' : '' }}>20%</Button>
+            <Button type="button" onClick={() => {setTip(parseFloat((.22*totalAfterTax).toFixed(2))); setTipPercentage(0.22)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.22 ? '#D5E6FF' : '' }}>22%</Button>
+          </div>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+            <Input 
+              id="tip" 
+              name="tip" 
+              value={tip !== null ? tip.toString() : ''} 
+              className="pl-6" 
+              type="number" 
+              step="0.01" 
+              onChange={handleTipChange}
+              onKeyDown={preventEnterKey} 
+            />
+          </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="taxFees">Tax/Fees</Label>
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input 
-            id="tax" 
-            name="tax" 
-            value={tax !== null ? tax.toString() : ''} 
-            onChange={handleTaxChange} 
-            onKeyDown={preventEnterKey} 
-            className="pl-6" 
-            type="number" 
-            step="0.01" 
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="totalAfterTax">Total After Tax</Label>
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input 
-            id="totalAfterTax" 
-            name="totalAfterTax" 
-            value={totalAfterTax !== null ? totalAfterTax.toString() : ''} 
-            onChange={handleTotalAfterTaxChange} 
-            onKeyDown={preventEnterKey} 
-            className="pl-6" 
-            type="number" 
-            step="0.01" 
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="tip">Tip</Label>
-        <div className="flex flex-row items-center gap-1">
-          <Button type="button" onClick={() => {setTip(0); setTipPercentage(0)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0 ? '#D5E6FF' : '' }}>0%</Button>
-          <Button type="button" onClick={() => {setTip(parseFloat((.15*totalAfterTax).toFixed(2))); setTipPercentage(0.15)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.15 ? '#D5E6FF' : '' }}>15%</Button>
-          <Button type="button" onClick={() => {setTip(parseFloat((.18*totalAfterTax).toFixed(2))); setTipPercentage(0.18)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.18 ? '#D5E6FF' : '' }}>18%</Button>
-          <Button type="button" onClick={() => {setTip(parseFloat((.20*totalAfterTax).toFixed(2))); setTipPercentage(0.20)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.20 ? '#D5E6FF' : '' }}>20%</Button>
-          <Button type="button" onClick={() => {setTip(parseFloat((.22*totalAfterTax).toFixed(2))); setTipPercentage(0.22)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.22 ? '#D5E6FF' : '' }}>22%</Button>
-        </div>
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-          <Input 
-            id="tip" 
-            name="tip" 
-            value={tip !== null ? tip.toString() : ''} 
-            className="pl-6" 
-            type="number" 
-            step="0.01" 
-            onChange={handleTipChange}
-            onKeyDown={preventEnterKey} 
-          />
+        <Label htmlFor="venmoUsername">Venmo Username</Label>
+        <div className="flex flex-row items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="useVenmo"
+              checked={useVenmo}
+              onCheckedChange={setUseVenmo}
+              className="data-[state=checked]:bg-blue-400 data-[state=checked]:hover:bg-blue-500 data-[state=checked]:focus-visible:ring-blue-400"
+            />
+            <Label htmlFor="useVenmo" className="text-sm">Use Venmo</Label>
+          </div>
+          <div className="flex-1">
+            <Input 
+              id="venmoUsername" 
+              name="venmoUsername"
+              value={venmoUsername !== null ? `@${venmoUsername.toString().replace('@', '')}` : '@'}
+              onChange={(e) => {
+                const value = e.target.value;
+                setVenmoUsername(value.startsWith('@') ? value.substring(1) : value);
+              }}
+              onKeyDown={preventEnterKey}
+              disabled={!useVenmo}
+              className={!useVenmo ? 'bg-gray-100' : ''}
+            />
+          </div>
         </div>
       </div>
 

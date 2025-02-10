@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useSupabase } from '@/SupabaseContext';
 import { X } from 'lucide-react';
 import Header from '@/components/Header';
+import venmoLogo from '@/assets/venmo.svg';
 
 const calcTaxTipTotalShare = (totalAfterTax: number, tax: number, tip: number, individualPreTax: number) => {
   const totalPreTax = totalAfterTax - tax;
@@ -31,6 +32,7 @@ const Shareable = () => {
   const [individualTotals, setIndividualTotals] = useState({});
   const [transaction, setTransaction] = useState<any>(null);
   const [transactionName, setTransactionName] = useState<string | null>(null);
+  const [venmoUsername, setVenmoUsername] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const supabase = useSupabase();
   const { id } = useParams();
@@ -44,6 +46,7 @@ const Shareable = () => {
     } else {
       setTransaction(data);
       setTransactionName(data.restaurant);
+      setVenmoUsername(data.venmo);
     }
   };
 
@@ -194,6 +197,14 @@ const Shareable = () => {
         <div className={`transition-opacity duration-700 ${isNicknameSet ? 'opacity-100' : 'opacity-0'}`}>
           {isNicknameSet && (
             <>
+              {venmoUsername && (
+                <div className="flex justify-center mb-6">
+                  <p className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg">
+                    <img src={venmoLogo} alt="Venmo" className="h-4 w-4" />
+                    {venmoUsername}
+                  </p>
+                </div>
+              )}
               <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{transactionName}</h1>
               <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
                 {Object.keys(claimedItems).map((item) => (
