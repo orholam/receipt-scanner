@@ -77,14 +77,9 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [formChanged, setFormChanged] = useState<boolean>(false);
   const [tipPercentage, setTipPercentage] = useState<number | null>(null);
   const [grandTotal, setGrandTotal] = useState<number | null>(null);
-  const [venmoUsername, setVenmoUsername] = useState<string | null>(null);
-  const [useVenmo, setUseVenmo] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<string>('Venmo');
   const paymentMethods = ['Venmo', 'Cashapp', 'Apple Pay', 'Zelle'];
-  const [usePaymentMethod, setUsePaymentMethod] = useState<boolean>(false);
-  const [cashappUsername, setCashappUsername] = useState<string | null>(null);
-  const [applePayUsername, setApplePayUsername] = useState<string | null>(null);
-  const [zelleUsername, setZelleUsername] = useState<string | null>(null);
+  const [paymentUsername, setPaymentUsername] = useState<string | null>(null);
   const supabase = useSupabase();
 
   useEffect(() => {
@@ -124,7 +119,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   useEffect(() => {
     setFormChanged(true);
-  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod, venmoUsername, cashappUsername, applePayUsername, zelleUsername]);
+  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod]);
 
   useEffect(() => {
     setLocalContent(content);
@@ -189,6 +184,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
+    
+    // Add payment method to form data
+    formData.append('paymentMethod', paymentMethod);
+    
     const data = Object.fromEntries(formData);
     console.log("DATA");
     console.log(data);
@@ -205,7 +204,8 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         tip: data.tip,
         tax: data.tax,
         total: Number(data.totalAfterTax),
-        venmo: data.venmoUsername,
+        payment_username: data.paymentUsername,
+        payment_method: data.paymentMethod,
         status: 'incomplete',
         owner_id: '123'
       });
@@ -429,105 +429,35 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       <div className="space-y-2">
         <Label htmlFor="paymentMethod">Payment Method</Label>
         <div className="flex flex-row items-center gap-3">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="usePaymentMethod"
-              checked={usePaymentMethod}
-              onCheckedChange={setUsePaymentMethod}
-              className="data-[state=checked]:bg-blue-400 data-[state=checked]:hover:bg-blue-500 data-[state=checked]:focus-visible:ring-blue-400"
-            />
+          <div className="w-1/3">
+            <Select onValueChange={setPaymentMethod} value={paymentMethod}>
+              <SelectTrigger>
+                {paymentMethod}
+              </SelectTrigger>
+              <SelectContent>
+                {paymentMethods.map((method) => (
+                  <SelectItem key={method} value={method}>
+                    {method}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex-1">
-            {usePaymentMethod ? (
-              <Select onValueChange={setPaymentMethod} value={paymentMethod}>
-                <SelectTrigger className="w-full">
-                  <Input 
-                    id="paymentMethod" 
-                    name="paymentMethod"
-                    value={paymentMethod}
-                    readOnly
-                    className="bg-white"
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input 
-                id="paymentMethod" 
-                name="paymentMethod"
-                value={paymentMethod}
-                readOnly
-                className="bg-gray-100"
-                disabled
-              />
-            )}
+            <Input 
+              id="paymentUsername" 
+              name="paymentUsername"
+              value={paymentUsername !== null ? `@${paymentUsername.toString().replace('@', '')}` : '@'}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPaymentUsername(value.startsWith('@') ? value.substring(1) : value);
+              }}
+              onKeyDown={preventEnterKey}
+              placeholder={`Enter ${paymentMethod} username`}
+            />
           </div>
         </div>
       </div>
-
-      {usePaymentMethod && paymentMethod === 'Venmo' && (
-        <div className="space-y-2">
-          <Label htmlFor="venmoUsername">Venmo Username</Label>
-          <Input 
-            id="venmoUsername" 
-            name="venmoUsername"
-            value={venmoUsername !== null ? `@${venmoUsername.toString().replace('@', '')}` : '@'}
-            onChange={(e) => {
-              const value = e.target.value;
-              setVenmoUsername(value.startsWith('@') ? value.substring(1) : value);
-            }}
-            onKeyDown={preventEnterKey}
-          />
-        </div>
-      )}
-
-      {usePaymentMethod && paymentMethod === 'Cashapp' && (
-        <div className="space-y-2">
-          <Label htmlFor="cashappUsername">Cashapp Username</Label>
-          <Input 
-            id="cashappUsername" 
-            name="cashappUsername"
-            value={cashappUsername !== null ? `$${cashappUsername.toString().replace('$', '')}` : '$'}
-            onChange={(e) => {
-              const value = e.target.value;
-              setCashappUsername(value.startsWith('$') ? value.substring(1) : value);
-            }}
-            onKeyDown={preventEnterKey}
-          />
-        </div>
-      )}
-
-      {usePaymentMethod && paymentMethod === 'Apple Pay' && (
-        <div className="space-y-2">
-          <Label htmlFor="applePayUsername">Phone Number</Label>
-          <Input 
-            id="applePayUsername" 
-            name="applePayUsername"
-            value={applePayUsername || ''}
-            onChange={(e) => setApplePayUsername(e.target.value)}
-            onKeyDown={preventEnterKey}
-          />
-        </div>
-      )}
-
-      {usePaymentMethod && paymentMethod === 'Zelle' && (
-        <div className="space-y-2">
-          <Label htmlFor="zelleUsername">Phone Number</Label>
-          <Input 
-            id="zelleUsername" 
-            name="zelleUsername"
-            value={zelleUsername || ''}
-            onChange={(e) => setZelleUsername(e.target.value)}
-            onKeyDown={preventEnterKey}
-          />
-        </div>
-      )}
 
       <hr className="my-4 border-gray-500" />
 
