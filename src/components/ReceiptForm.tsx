@@ -453,6 +453,16 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       )}
 
+      <div className="flex justify-center mt-8">
+        <a
+          href="https://forms.gle/GTYzC5f42PU2uuNZ6"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-purple-600 hover:bg-purple-700 text-white text-center py-3 px-6 rounded-lg shadow-md transition duration-300"
+        >
+          Click here for Test User Survey
+        </a>
+      </div>
     </form>
   );
 };
