@@ -28,12 +28,12 @@ type Transaction = {
 const generateId = async (): Promise<string> => {
   try {
     // Fetch a random adjective
-    const adjectiveResponse = await fetch('https://random-word-form.herokuapp.com/random/adjective');
+    const adjectiveResponse = await fetch('https://random-word-api.herokuapp.com/word');
     const adjectiveArray = await adjectiveResponse.json();
     const adjective = adjectiveArray[0].replace(/\s+/g, '-');
 
     // Fetch a random noun
-    const nounResponse = await fetch('https://random-word-form.herokuapp.com/random/noun');
+    const nounResponse = await fetch('https://random-word-api.herokuapp.com/word');
     const nounArray = await nounResponse.json();
     const noun = nounArray[0].replace(/\s+/g, '-');
 
