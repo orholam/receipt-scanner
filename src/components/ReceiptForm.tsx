@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, MinusCircle, PlusCircle, Split } from 'lucide-react';
+import { Copy, MinusCircle, PlusCircle, Split, HelpCircle } from 'lucide-react';
 import { useSupabase } from '@/SupabaseContext';
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
@@ -88,6 +89,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const supabase = useSupabase();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
+  const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
     if (totalBeforeTax === null || totalAfterTax === null || tax < 0 || totalAfterTax < totalBeforeTax) {
@@ -314,8 +316,29 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       {currentStep === 1 && (
         <div>
-          <div className="space-y-2">
+          <div className="flex justify-between items-center mt-4">
             <Label htmlFor="vendor">Vendor</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <HelpCircle size={24} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="p-4 bg-white shadow-lg rounded-lg">
+                <div className="text-gray-700">
+                  <p>Step One:</p>
+                  <ul className="list-disc list-inside">
+                    <li>Please check each item</li>
+                    <li>Add any items we missed using the Remove, Split, and Add buttons!</li>
+                  </ul>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-2 mt-4">
             <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} />
           </div>
           
@@ -366,13 +389,38 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               <PlusCircle size={20} style={{ width: '20px', height: '20px' }} />
             </Button>
           </div>
+          <div className="flex justify-end mt-4">
+            <Button type="button" onClick={handleNext} className="bg-blue-400 hover:bg-blue-500 w-32">
+              Next
+            </Button>
+          </div>
         </div>
       )}
 
       {currentStep === 2 && (
         <div id="totals" className="space-y-2 bg-gradient-to-b from-blue-50 to-white shadow-lg rounded-lg p-4">
           <div className="space-y-2">
-            <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <HelpCircle size={24} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-4 bg-white shadow-lg rounded-lg">
+                  <div className="text-gray-700">
+                    <p>Step Two:</p>
+                    <ul className="list-disc list-inside">
+                      <li>Please enter your total, tax, and tip</li>
+                    </ul>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="relative">
               <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
               <Input 
@@ -387,7 +435,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               />
             </div>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="taxFees">Tax/Fees</Label>
             <div className="relative">
@@ -450,8 +497,30 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
       {currentStep === 3 && (
         <div>
-          <div className="space-y-2">
+          <div className="flex justify-between items-center">
             <Label htmlFor="paymentMethod">Payment Method</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <HelpCircle size={24} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="p-4 bg-white shadow-lg rounded-lg">
+                <div className="text-gray-700">
+                  <p>Step Three:</p>
+                  <ul className="list-disc list-inside">
+                    <li>Add payment method username (Optional)</li>
+                    <li>Click the sharable link button</li>
+                    <li>Share the link with friends and claim your own items!</li>
+                  </ul>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-2">
             <div className="flex flex-row items-center gap-3">
               <div className="flex items-center space-x-2">
                 <Switch
@@ -594,13 +663,13 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       )}
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between items-center mt-4">
         {currentStep > 1 && (
           <Button type="button" onClick={handlePrevious} className="bg-gray-400 hover:bg-gray-500 w-32">
             Previous
           </Button>
         )}
-        {currentStep < totalSteps && (
+        {currentStep > 1 && currentStep < totalSteps && (
           <Button type="button" onClick={handleNext} className="bg-blue-400 hover:bg-blue-500 w-32">
             Next
           </Button>
