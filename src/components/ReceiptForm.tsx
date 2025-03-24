@@ -341,11 +341,20 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
           <div className="space-y-2 mt-4">
             <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} />
           </div>
-          
+
+          <div className="flex space-x-4 items-center mt-4">
+            <div className="flex-1">
+              <Label>Item Name</Label>
+            </div>
+            <div className="flex-1">
+              <Label>Item Cost</Label>
+            </div>
+            <div className="w-10"></div> {/* Placeholder for buttons */}
+          </div>
+
           {localContent.items && localContent.items.map((item, index) => (
-            <div key={`${item.itemName}-${index}`} className="flex space-x-4 items-center">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor={`itemName-${index}`}>Item Name</Label>
+            <div key={`${item.itemName}-${index}`} className="flex space-x-4 items-center mt-4"> {/* Added margin-top */}
+              <div className="flex-1">
                 <Input
                   id={`itemName-${index}`}
                   name={`itemName-${index}`}
@@ -354,8 +363,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                   onKeyDown={preventEnterKey}
                 />
               </div>
-              <div className="flex-1 space-y-2">
-                <Label htmlFor={`itemCost-${index}`}>Item Cost</Label>
+              <div className="flex-1">
                 <Input
                   id={`itemCost-${index}`}
                   name={`itemCost-${index}`}
@@ -520,7 +528,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 mt-4"> {/* Added margin-top */}
             <div className="flex flex-row items-center gap-3">
               <div className="flex items-center space-x-2">
                 <Switch
