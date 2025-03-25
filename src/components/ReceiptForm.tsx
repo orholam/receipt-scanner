@@ -29,12 +29,12 @@ type Transaction = {
 const generateId = async (): Promise<string> => {
   try {
     // Fetch a random adjective
-    const adjectiveResponse = await fetch('https://random-word-api.herokuapp.com/word');
+    const adjectiveResponse = await fetch('https://random-word-form.herokuapp.com/random/adjective');
     const adjectiveArray = await adjectiveResponse.json();
     const adjective = adjectiveArray[0].replace(/\s+/g, '-');
 
     // Fetch a random noun
-    const nounResponse = await fetch('https://random-word-api.herokuapp.com/word');
+    const nounResponse = await fetch('https://random-word-form.herokuapp.com/random/noun');
     const nounArray = await nounResponse.json();
     const noun = nounArray[0].replace(/\s+/g, '-');
 
@@ -78,9 +78,14 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [formChanged, setFormChanged] = useState<boolean>(false);
   const [tipPercentage, setTipPercentage] = useState<number | null>(null);
   const [grandTotal, setGrandTotal] = useState<number | null>(null);
+  const [venmoUsername, setVenmoUsername] = useState<string | null>(null);
+  const [useVenmo, setUseVenmo] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<string>('Venmo');
   const paymentMethods = ['Venmo', 'Cashapp', 'Apple Pay', 'Zelle'];
-  const [paymentUsername, setPaymentUsername] = useState<string | null>(null);
+  const [usePaymentMethod, setUsePaymentMethod] = useState<boolean>(false);
+  const [cashappUsername, setCashappUsername] = useState<string | null>(null);
+  const [applePayUsername, setApplePayUsername] = useState<string | null>(null);
+  const [zelleUsername, setZelleUsername] = useState<string | null>(null);
   const supabase = useSupabase();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
@@ -123,7 +128,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   useEffect(() => {
     setFormChanged(true);
-  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod]);
+  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod, venmoUsername, cashappUsername, applePayUsername, zelleUsername]);
 
   useEffect(() => {
     setLocalContent(content);
@@ -188,10 +193,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    
-    // Add payment method to form data
-    formData.append('paymentMethod', paymentMethod);
-    
     const data = Object.fromEntries(formData);
     console.log("DATA");
     console.log(data);
@@ -208,8 +209,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         tip: data.tip,
         tax: data.tax,
         total: Number(data.totalAfterTax),
-        payment_username: data.paymentUsername,
-        payment_method: data.paymentMethod,
+        venmo: data.venmoUsername,
         status: 'incomplete',
         owner_id: '123'
       });
@@ -503,7 +503,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         </div>
       )}
 
-
       {currentStep === 3 && (
         <div>
           <div className="flex justify-between items-center">
@@ -603,41 +602,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                 />
               </div>
             )}
-=======
-      <div className="space-y-2">
-        <Label htmlFor="paymentMethod">Payment Method</Label>
-        <div className="flex flex-row items-center gap-3">
-          <div className="w-1/3">
-            <Select onValueChange={setPaymentMethod} value={paymentMethod}>
-              <SelectTrigger>
-                {paymentMethod}
-              </SelectTrigger>
-              <SelectContent>
-                {paymentMethods.map((method) => (
-                  <SelectItem key={method} value={method}>
-                    {method}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-1">
-            <Input 
-              id="paymentUsername" 
-              name="paymentUsername"
-              value={paymentUsername !== null ? `@${paymentUsername.toString().replace('@', '')}` : '@'}
-              onChange={(e) => {
-                const value = e.target.value;
-                setPaymentUsername(value.startsWith('@') ? value.substring(1) : value);
-              }}
-              onKeyDown={preventEnterKey}
-              placeholder={`Enter ${paymentMethod} username`}
-            />
-          </div>
-        </div>
-      </div>
-
-      <hr className="my-4 border-gray-500" />
 
             {usePaymentMethod && paymentMethod === 'Apple Pay' && (
               <div className="space-y-2">
