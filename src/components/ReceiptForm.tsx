@@ -85,11 +85,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   const [showInstructions, setShowInstructions] = useState(false);
-  const [usePaymentMethod, setUsePaymentMethod] = useState<boolean>(false);
-  const [venmoUsername, setVenmoUsername] = useState<string | null>(null);
-  const [cashappUsername, setCashappUsername] = useState<string | null>(null);
-  const [applePayUsername, setApplePayUsername] = useState<string | null>(null);
-  const [zelleUsername, setZelleUsername] = useState<string | null>(null);
 
   useEffect(() => {
     if (totalBeforeTax === null || totalAfterTax === null || tax < 0 || totalAfterTax < totalBeforeTax) {
@@ -608,6 +603,41 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                 />
               </div>
             )}
+=======
+      <div className="space-y-2">
+        <Label htmlFor="paymentMethod">Payment Method</Label>
+        <div className="flex flex-row items-center gap-3">
+          <div className="w-1/3">
+            <Select onValueChange={setPaymentMethod} value={paymentMethod}>
+              <SelectTrigger>
+                {paymentMethod}
+              </SelectTrigger>
+              <SelectContent>
+                {paymentMethods.map((method) => (
+                  <SelectItem key={method} value={method}>
+                    {method}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1">
+            <Input 
+              id="paymentUsername" 
+              name="paymentUsername"
+              value={paymentUsername !== null ? `@${paymentUsername.toString().replace('@', '')}` : '@'}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPaymentUsername(value.startsWith('@') ? value.substring(1) : value);
+              }}
+              onKeyDown={preventEnterKey}
+              placeholder={`Enter ${paymentMethod} username`}
+            />
+          </div>
+        </div>
+      </div>
+
+      <hr className="my-4 border-gray-500" />
 
             {usePaymentMethod && paymentMethod === 'Apple Pay' && (
               <div className="space-y-2">
