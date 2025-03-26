@@ -166,5 +166,14 @@ html {
     animation: gradient-direction 5s linear infinite;
 }
 
+a {
+  color: blue;
+  text-decoration: underline;
+}
+p {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
 
 

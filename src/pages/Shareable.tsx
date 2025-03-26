@@ -34,6 +34,7 @@ const Shareable = () => {
   const [transactionName, setTransactionName] = useState<string | null>(null);
   const [venmoUsername, setVenmoUsername] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [link, setLink] = useState<string | null>(null);
   const supabase = useSupabase();
   const { id } = useParams();
 
@@ -158,6 +159,12 @@ const Shareable = () => {
     }
   };
 
+  const generateLink = () => {
+    const newLink = `https://example.com/share/${Math.random().toString(36).substr(2, 9)}`;
+    console.log("Generated link:", newLink); // Debugging log
+    setLink(newLink);
+  };
+
   return (
     <div className="flex flex-col flex-grow bg-gradient-to-b from-indigo-100 to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10">
       <Header />
@@ -251,6 +258,27 @@ const Shareable = () => {
                 >
                   Claim
                 </button>
+              )}
+              <button
+                className="w-full bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 transition-opacity duration-300"
+                onClick={generateLink}
+              >
+                Generate Sharable Link
+              </button>
+              {link && (
+                <div className="mt-4">
+                  <p className="text-gray-800">
+                    Your sharable link:{" "}
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 underline"
+                    >
+                      {link}
+                    </a>
+                  </p>
+                </div>
               )}
             </>
           )}

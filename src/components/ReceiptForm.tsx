@@ -26,23 +26,27 @@ type Transaction = {
   venmoUsername?: string;
 };
 
+const adjectives = ['quick', 'bright', 'happy'];
+const nouns = ['fox', 'dog', 'cat'];
+
 const generateId = async (): Promise<string> => {
   try {
-    // Fetch a random adjective
     const adjectiveResponse = await fetch('https://random-word-form.herokuapp.com/random/adjective');
     const adjectiveArray = await adjectiveResponse.json();
     const adjective = adjectiveArray[0].replace(/\s+/g, '-');
 
-    // Fetch a random noun
     const nounResponse = await fetch('https://random-word-form.herokuapp.com/random/noun');
     const nounArray = await nounResponse.json();
     const noun = nounArray[0].replace(/\s+/g, '-');
 
-    // Combine adjective and noun with a hyphen
     return `${adjective}-${noun}`;
   } catch (error) {
     console.error('Error generating ID:', error);
-    return 'default-id';
+
+    // Fallback to local data
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${adjective}-${noun}`;
   }
 };
 
@@ -92,7 +96,12 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
-    if (totalBeforeTax === null || totalAfterTax === null || tax < 0 || totalAfterTax < totalBeforeTax) {
+    if (
+      totalBeforeTax === null ||
+      totalAfterTax === null ||
+      tax < 0 ||
+      totalAfterTax < totalBeforeTax
+    ) {
       setIsSharableLinkDisabled(true);
     } else {
       setIsSharableLinkDisabled(false);
@@ -198,6 +207,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     console.log(data);
 
     if (formChanged) {
+      setShareablePageCreated(false); // Reset the state before generating a new link
       const generatedId = await generateId();
       setId(generatedId);
 
@@ -247,7 +257,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         }
       }
 
-      setShareablePageCreated(true);
+      setShareablePageCreated(true); // Set the state after the link is successfully created
       setFormChanged(false);
     }
   };
