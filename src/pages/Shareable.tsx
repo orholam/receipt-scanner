@@ -5,23 +5,6 @@ import { X } from 'lucide-react';
 import Header from '@/components/Header';
 import venmoLogo from '@/assets/venmo.svg';
 
-const calcTaxTipTotalShare = (totalAfterTax: number, tax: number, tip: number, individualPreTax: number) => {
-  const totalPreTax = totalAfterTax - tax;
-  console.log("totalPreTax", totalPreTax);
-  const individualPercentage = individualPreTax / totalPreTax;
-  console.log("individualPercentage", individualPercentage);
-  const individualTax = parseFloat((tax * individualPercentage).toFixed(2)); // this should be formatted as a dollar amount with two decimal places
-  console.log("individualTax", individualTax);
-  const individualTip = parseFloat((tip * individualPercentage).toFixed(2));
-  console.log("individualTip", individualTip);
-  const individualTotal = parseFloat((individualPreTax + individualTax + individualTip).toFixed(2));
-  return {
-    individualTotal,
-    individualTax,
-    individualTip,
-  }
-}
-
 const Shareable = () => {
   const [isNicknameSet, setIsNicknameSet] = useState<boolean>(false);
   const [nickname, setNickname] = useState<string | null>(null);
@@ -37,6 +20,30 @@ const Shareable = () => {
   const [error, setError] = useState<string | null>(null);
   const supabase = useSupabase();
   const { id } = useParams();
+
+  // Move handleUpdates inside component
+  const handleUpdates = (payload) => {
+    console.log("Change received!", payload);
+    // We need to fetch the updated items when changes occur
+    fetchItems();
+  }
+
+  const calcTaxTipTotalShare = (totalAfterTax: number, tax: number, tip: number, individualPreTax: number) => {
+    const totalPreTax = totalAfterTax - tax;
+    console.log("totalPreTax", totalPreTax);
+    const individualPercentage = individualPreTax / totalPreTax;
+    console.log("individualPercentage", individualPercentage);
+    const individualTax = parseFloat((tax * individualPercentage).toFixed(2)); // this should be formatted as a dollar amount with two decimal places
+    console.log("individualTax", individualTax);
+    const individualTip = parseFloat((tip * individualPercentage).toFixed(2));
+    console.log("individualTip", individualTip);
+    const individualTotal = parseFloat((individualPreTax + individualTax + individualTip).toFixed(2));
+    return {
+      individualTotal,
+      individualTax,
+      individualTip,
+    }
+  }
 
   // Fetch transaction
   const fetchTransaction = async () => {
@@ -99,6 +106,7 @@ const Shareable = () => {
     }
   };
 
+  // Move fetchItems outside of useEffect so it can be called from handleUpdates
   useEffect(() => {
     const fetchTransactionData = async () => {
       await fetchTransaction(); // Fetch the transaction
@@ -115,6 +123,17 @@ const Shareable = () => {
       };
 
       fetchItemsData();
+
+      // Set up subscription to claims
+      const channel = supabase
+        .channel('claims')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'item', filter: `transaction_id=eq.${id}` }, handleUpdates)
+        .subscribe();
+      
+      // Clean up subscription when component unmounts
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [transaction]); // Run when transaction changes
 
