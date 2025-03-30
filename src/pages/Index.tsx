@@ -117,12 +117,28 @@ const Index = () => {
             {capturedImage && (
               <Dialog>
                 <DialogTrigger asChild>
-                  <div className="cursor-pointer">
+                  <div className="cursor-pointer relative">
                     <img 
                       src={capturedImage} 
                       alt="Captured receipt" 
                       className="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition-opacity"
                     />
+                    {!isOcrComplete && (
+                      <div className="absolute inset-0 bg-blue-500/20 rounded-lg flex items-center justify-center animate-pulse">
+                        {[...Array(12)].map((_, i) => (
+                          <div 
+                            key={i}
+                            className="absolute w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"
+                            style={{
+                              top: `${Math.random() * 100}%`,
+                              left: `${Math.random() * 100}%`,
+                              animationDelay: `${i * 0.15}s`,
+                              animationDuration: `${0.8 + Math.random() * 1.2}s`
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl">
