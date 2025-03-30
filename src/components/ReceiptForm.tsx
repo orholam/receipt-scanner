@@ -68,6 +68,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [id, setId] = useState<string>('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [shareablePageCreated, setShareablePageCreated] = useState<boolean>(false);
+  const [shareablePageLoading, setShareablePageLoading] = useState<boolean>(false);
   const [localContent, setLocalContent] = useState(content);
   const [tax, setTax] = useState(content.tax || 0);
   const [totalBeforeTax, setTotalBeforeTax] = useState<number | null>(content.totalBeforeTax || null);
@@ -201,6 +202,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     const data = collectFormData(); // Collect all form data
 
     if (formChanged) {
+      setShareablePageLoading(true);
       const generatedId = await generateId();
       setId(generatedId);
 
@@ -240,6 +242,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         }
       }
 
+      setShareablePageLoading(false);
       setShareablePageCreated(true);
       setFormChanged(false);
     }
@@ -478,13 +481,15 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                 <p className="pl-6 py-2 text-2xl">{grandTotal !== null ? grandTotal.toFixed(2) : ''}</p>
               </div>
             </div>
-            <Button 
-              type="submit" 
-              className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
-              disabled={isButtonDisabled}
-            >
-              Shareable Link
-            </Button>
+            <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
+              <Button 
+                type="submit" 
+                className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                disabled={isButtonDisabled || shareablePageLoading}
+              >
+                {shareablePageLoading ? 'Generating Link...' : 'Generate Link to Share with Friends'}
+              </Button>
+            </div>
             {isButtonDisabled && (
               <p className="text-red-500 text-sm mt-2 text-center">
                 {totalAfterTax <= 0 ? 'Total after tax cannot be negative' : 
@@ -492,6 +497,12 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                 tax < 0 ? 'Tax cannot be negative.' : 
                 'Please ensure all item costs are non-negative and total after tax is valid.'}
               </p>
+            )}
+            {shareablePageLoading && (
+              <div className="mt-4 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                <p className="text-gray-700 mt-2">Creating your shareable link...</p>
+              </div>
             )}
             {shareablePageCreated && (
               <div className="mt-4 text-center">

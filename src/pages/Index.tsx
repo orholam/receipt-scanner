@@ -134,7 +134,14 @@ const Index = () => {
                 </DialogContent>
               </Dialog>
             )}
-            {!isOcrComplete ? <p> Receipt information is being processed... </p> : <ReceiptForm content={ocrResult} onSubmit={handleSubmit} />}
+            {!isOcrComplete ? (
+              <div className="mt-4 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                <p className="text-gray-700 mt-2">Receipt information is being processed...</p>
+              </div>
+            ) : (
+              <ReceiptForm content={ocrResult} onSubmit={handleSubmit} />
+            )}
           </div>
         )}
 
