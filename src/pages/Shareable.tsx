@@ -200,15 +200,23 @@ const Shareable = () => {
                 className="w-full px-4 py-2 rounded-full border text-center"
                 onChange={(e) => setNickname(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' && nickname && nickname.trim() !== '') {
                     setIsNicknameSet(true);
                   }
                 }}
               />
               <br/><br/>
               <button
-                className="w-full bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 transition-opacity duration-300 opacity-0 animate-fade-float-in"
-                onClick={() => setIsNicknameSet(true)}
+                className={`w-full py-2 rounded-lg transition-all duration-300 opacity-0 animate-fade-float-in ${
+                  nickname && nickname.trim() !== '' 
+                    ? 'bg-blue-400 text-white hover:bg-blue-500 cursor-pointer' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                onClick={() => {
+                  if (nickname && nickname.trim() !== '') {
+                    setIsNicknameSet(true);
+                  }
+                }}
               >
                 Claim your items
               </button>
