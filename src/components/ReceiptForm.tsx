@@ -25,6 +25,12 @@ type Transaction = {
   venmoUsername?: string;
 };
 
+const generateIdBackup = () => {
+  const timestamp = new Date().getTime();
+  const randomNum = Math.floor(Math.random() * 1000);
+  return `receipt-${timestamp}-${randomNum}`;
+}
+
 const generateId = async (): Promise<string> => {
   try {
     // Fetch a random adjective
@@ -203,7 +209,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
     if (formChanged) {
       setShareablePageLoading(true);
-      const generatedId = await generateId();
+      const generatedId = await generateIdBackup();
       setId(generatedId);
 
       // Create new transaction row in Supabase
