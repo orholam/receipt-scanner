@@ -100,7 +100,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       case 1:
         return "Enter tax, tip, and total amounts. Adjust values to ensure accuracy";
       case 2:
-        return "Generate a shareable link, share with your friends and select your own items!   Use our optional payment method, and enter a username or just tell them";
+        return "Generate a shareable link, share with your friends and select your own items! Please generate a new link for any new changes! Use our optional payment method, and enter a username";
       default:
         return null;
     }
@@ -148,6 +148,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   useEffect(() => {
     setFormChanged(true);
   }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod]);
+
+  useEffect(() => {
+    setFormChanged(true); // Ensure formChanged is set to true when payment method or username changes
+  }, [paymentMethod, paymentUsername]);
 
   useEffect(() => {
     setLocalContent(content);
@@ -270,7 +274,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
       setShareablePageLoading(false);
       setShareablePageCreated(true);
-      setFormChanged(false);
+      setFormChanged(false); // Reset formChanged after submission
     }
   };
 
@@ -485,8 +489,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             <div
               className={`space-y-2 mt-4 ${isPaymentMethodEnabled ? '' : 'opacity-50 pointer-events-none'}`}
             >
-              {/* Grays out and disables the section when toggle is off */}
-              <Label htmlFor="paymentMethod">Payment Method</Label>
               <div className="flex flex-row items-center gap-3">
                 <div className="w-1/3">
                   <Select onValueChange={setPaymentMethod} value={paymentMethod}>
@@ -502,17 +504,37 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 relative">
+                  {paymentMethod === 'Venmo' && (
+                    <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-black">@</span>
+                  )}
                   <Input
                     id="paymentUsername"
                     name="paymentUsername"
-                    value={paymentUsername !== null ? `@${paymentUsername.toString().replace('@', '')}` : '@'}
+                    value={
+                      paymentMethod === 'Venmo'
+                        ? paymentUsername !== null
+                          ? paymentUsername.toString().replace('@', '')
+                          : ''
+                        : paymentUsername || ''
+                    }
                     onChange={(e) => {
                       const value = e.target.value;
-                      setPaymentUsername(value.startsWith('@') ? value.substring(1) : value);
+                      setPaymentUsername(
+                        paymentMethod === 'Venmo'
+                          ? value.startsWith('@')
+                            ? value.substring(1)
+                            : value
+                          : value
+                      );
                     }}
                     onKeyDown={preventEnterKey}
-                    placeholder={`Enter ${paymentMethod} username`}
+                    placeholder={
+                      paymentMethod === 'Venmo'
+                        ? 'Please enter your username'
+                        : 'Please enter your number'
+                    }
+                    className={`pl-${paymentMethod === 'Venmo' ? '6' : '3'} text-black placeholder-gray-500`}
                   />
                 </div>
               </div>
