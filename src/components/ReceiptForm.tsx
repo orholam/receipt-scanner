@@ -89,6 +89,26 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const paymentMethods = ['Venmo', 'Cashapp', 'Apple Pay', 'Zelle'];
   const [paymentUsername, setPaymentUsername] = useState<string | null>(null);
   const supabase = useSupabase();
+  const [helpText, setHelpText] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+  const [isPaymentMethodEnabled, setIsPaymentMethodEnabled] = useState<boolean>(false); // Default set to false
+
+  const getHelpText = () => {
+    switch (currentPage) {
+      case 0:
+        return "Add items and their costs here. You can split or remove items as needed";
+      case 1:
+        return "Enter tax, tip, and total amounts. Adjust values to ensure accuracy";
+      case 2:
+        return "Generate a shareable link, share with your friends and select your own items!   Use our optional payment method, and enter a username or just tell them";
+      default:
+        return null;
+    }
+  };
+
+  useEffect(() => {
+    setHelpText(getHelpText());
+  }, [currentPage]);
 
   useEffect(() => {
     if (totalBeforeTax === null || totalAfterTax === null || tax < 0 || totalAfterTax < totalBeforeTax) {
@@ -319,10 +339,17 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               <Label htmlFor="vendor">Vendor</Label>
               <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} onChange={(e) => setLocalContent({ ...localContent, businessName: e.target.value })} />
             </div>
+            <div className="flex space-x-4 items-center">
+              <div className="flex-1">
+                <Label>Item Name</Label>
+              </div>
+              <div className="flex-1">
+                <Label>Item Cost</Label>
+              </div>
+            </div>
             {localContent.items && localContent.items.map((item, index) => (
               <div key={`${item.itemName}-${index}`} className="flex space-x-4 items-center">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor={`itemName-${index}`}>Item Name</Label>
                   <Input
                     id={`itemName-${index}`}
                     name={`itemName-${index}`}
@@ -332,7 +359,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                   />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor={`itemCost-${index}`}>Item Cost</Label>
                   <Input
                     id={`itemCost-${index}`}
                     name={`itemCost-${index}`}
@@ -365,9 +391,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             </Button>
           </>
         );
-      case 1:
+      case 1: //Box for tax, tip, and total
         return (
-          <div id="totals" className="space-y-2 bg-gradient-to-b from-blue-50 to-white shadow-lg rounded-lg p-4">
+          <div id="totals" className="space-y-2 bg-gradient-to-b from-blue-50 to-white shadow-lg rounded-lg p-4">  
+            {/* Adjusted margin-top to mt-[-10px] to move the box closer */}
             <div className="space-y-2">
               <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
               <div className="relative">
@@ -448,6 +475,17 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         return (
           <>
             <div className="space-y-2">
+              <Label htmlFor="paymentMethodToggle">Enable Payment Method</Label>
+              <Switch
+                id="paymentMethodToggle"
+                checked={isPaymentMethodEnabled}
+                onCheckedChange={setIsPaymentMethodEnabled}
+              />
+            </div>
+            <div
+              className={`space-y-2 mt-4 ${isPaymentMethodEnabled ? '' : 'opacity-50 pointer-events-none'}`}
+            >
+              {/* Grays out and disables the section when toggle is off */}
               <Label htmlFor="paymentMethod">Payment Method</Label>
               <div className="flex flex-row items-center gap-3">
                 <div className="w-1/3">
@@ -465,8 +503,8 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                   </Select>
                 </div>
                 <div className="flex-1">
-                  <Input 
-                    id="paymentUsername" 
+                  <Input
+                    id="paymentUsername"
                     name="paymentUsername"
                     value={paymentUsername !== null ? `@${paymentUsername.toString().replace('@', '')}` : '@'}
                     onChange={(e) => {
@@ -488,9 +526,9 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               </div>
             </div>
             <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
-              <Button 
-                type="submit" 
-                className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
+              <Button
+                type="submit"
+                className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={isButtonDisabled || shareablePageLoading}
               >
                 {shareablePageLoading ? 'Generating Link...' : 'Generate Link to Share with Friends'}
@@ -532,6 +570,21 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowHelp(!showHelp)}
+          className="absolute top-[-5px] right-0 text-black border border-black rounded-full w-8 h-8 flex items-center justify-center"
+          aria-label="Help"
+        >
+          ?
+        </button>
+        {showHelp && (
+          <div className="absolute top-10 right-0 bg-white border border-gray-300 shadow-lg rounded-md p-4 w-64 z-10">
+            <p className="text-sm text-gray-700">{helpText}</p>
+          </div>
+        )}
+      </div>
       {renderPageContent()}
       <div className="flex justify-between mt-4">
         <div className="flex-1">
