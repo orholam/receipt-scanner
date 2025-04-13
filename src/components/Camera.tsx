@@ -68,6 +68,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         <Webcam
           audio={false}
           ref={webcamRef}
+          screenshotQuality={100}
           screenshotFormat="image/jpeg"
           videoConstraints={{
             facingMode: 'environment',
