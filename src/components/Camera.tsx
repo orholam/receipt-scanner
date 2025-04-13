@@ -1,15 +1,12 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import Webcam from 'react-webcam';
+import React, { useCallback, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Camera as CameraIcon, Upload, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Camera as CameraIcon, Upload } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (image: string) => void;
 }
 
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
-  const webcamRef = useRef<Webcam>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -67,37 +64,26 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         className="hidden"
         onChange={handleImageCapture}
       />
-      <div className="camera-container shadow-lg bg-white p-4">
-        <Webcam
-          ref={webcamRef}
-          audio={false}
-          screenshotFormat="image/jpeg"
-          videoConstraints={{
-            facingMode: "environment"
-          }}
-          className="w-full h-full object-cover"
-        />
-        <div className="scanner-overlay">
-          <div className="scanning-line" />
+      <div className="camera-container shadow-lg bg-white p-8 rounded-lg flex flex-col items-center justify-center gap-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Scan Your Receipt</h2>
+          <p className="text-gray-600">Take a photo of your receipt using your camera</p>
         </div>
-        <div className="corner corner-tl" />
-        <div className="corner corner-tr" />
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex justify-center">
+        <div className="flex gap-4">
           <Button 
             onClick={capture}
-            className="bg-blue-400 hover:bg-blue-500 rounded-full"
-            size="icon"
+            className="bg-blue-500 hover:bg-blue-600 px-6 py-2 flex items-center gap-2"
           >
-            <CameraIcon className="h-6 w-6" />
+            <CameraIcon className="h-5 w-5" />
+            Open Camera
           </Button>
-        </div>
-        <div className="absolute bottom-6 right-6 flex justify-center">
           <Button 
             onClick={upload}
-            className="bg-blue-400 hover:bg-blue-500 rounded-full"
-            size="icon"
+            variant="outline"
+            className="px-6 py-2 flex items-center gap-2"
           >
-            <Upload className="h-6 w-6" />
+            <Upload className="h-5 w-5" />
+            Upload Photo
           </Button>
         </div>
       </div>
