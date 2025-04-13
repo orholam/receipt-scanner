@@ -10,6 +10,7 @@ interface CameraProps {
 
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
   const webcamRef = useRef<Webcam>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isWebcamLoaded, setIsWebcamLoaded] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -25,11 +26,22 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
   }, []);
 
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setIsCapturing(true);
-      onCapture(imageSrc);
-      localStorage.setItem('capturedReceipt', imageSrc);
+    if (inputRef.current) {
+      inputRef.current.click();
+    }
+  }, []);
+
+  const handleImageCapture = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageSrc = reader.result as string;
+        setIsCapturing(true);
+        onCapture(imageSrc);
+        localStorage.setItem('capturedReceipt', imageSrc);
+      };
+      reader.readAsDataURL(file);
     }
   }, [onCapture]);
 
@@ -63,7 +75,14 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
 
   return (
     <div className="relative">
-
+      <input
+        type="file"
+        ref={inputRef}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleImageCapture}
+      />
       <div className="camera-container shadow-lg bg-white p-4">
         <Webcam
           audio={false}
