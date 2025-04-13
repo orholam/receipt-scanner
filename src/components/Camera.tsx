@@ -64,25 +64,25 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         className="hidden"
         onChange={handleImageCapture}
       />
-      <div className="camera-container shadow-lg bg-white p-8 rounded-lg flex flex-col items-center justify-center gap-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Scan Your Receipt</h2>
-          <p className="text-gray-600">Take a photo of your receipt using your camera</p>
+      <div className="camera-container shadow-xl bg-white p-10 rounded-2xl flex flex-col items-center justify-center gap-8 max-w-md mx-auto border border-gray-100">
+        <div className="text-center space-y-3">
+          <h2 className="text-3xl font-bold text-gray-800">Scan Your Receipt</h2>
+          <p className="text-gray-500 text-lg">Take a photo or upload your receipt to get started</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col w-full gap-4">
           <Button 
             onClick={capture}
-            className="bg-blue-500 hover:bg-blue-600 px-6 py-2 flex items-center gap-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6 flex items-center justify-center gap-3 transition-all duration-200"
           >
-            <CameraIcon className="h-5 w-5" />
+            <CameraIcon className="h-6 w-6" />
             Open Camera
           </Button>
           <Button 
             onClick={upload}
             variant="outline"
-            className="px-6 py-2 flex items-center gap-2"
+            className="w-full text-lg py-6 flex items-center justify-center gap-3 hover:bg-gray-50 transition-all duration-200"
           >
-            <Upload className="h-5 w-5" />
+            <Upload className="h-6 w-6" />
             Upload Photo
           </Button>
         </div>
