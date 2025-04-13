@@ -9,6 +9,7 @@ interface CameraProps {
 }
 
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
+  const webcamRef = useRef<Webcam>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -67,6 +68,15 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         onChange={handleImageCapture}
       />
       <div className="camera-container shadow-lg bg-white p-4">
+        <Webcam
+          ref={webcamRef}
+          audio={false}
+          screenshotFormat="image/jpeg"
+          videoConstraints={{
+            facingMode: "environment"
+          }}
+          className="w-full h-full object-cover"
+        />
         <div className="scanner-overlay">
           <div className="scanning-line" />
         </div>
