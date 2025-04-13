@@ -9,21 +9,8 @@ interface CameraProps {
 }
 
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
-  const webcamRef = useRef<Webcam>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isWebcamLoaded, setIsWebcamLoaded] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > 0);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   const capture = useCallback(() => {
     if (inputRef.current) {
@@ -65,10 +52,6 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
     fileInput.click();
   }, [onCapture]);
 
-  const handleWebcamLoad = useCallback(() => {
-    setIsWebcamLoaded(true);
-  }, []);
-
   if (isCapturing) {
     return null;
   }
@@ -84,16 +67,6 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
         onChange={handleImageCapture}
       />
       <div className="camera-container shadow-lg bg-white p-4">
-        <Webcam
-          audio={false}
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          videoConstraints={{
-            facingMode: 'environment',
-          }}
-          className={`w-full h-full object-cover transition-opacity duration-500 ${isWebcamLoaded ? 'opacity-100 blur-none' : 'opacity-0 blur-lg'}`}
-          onUserMedia={handleWebcamLoad}
-        />
         <div className="scanner-overlay">
           <div className="scanning-line" />
         </div>
