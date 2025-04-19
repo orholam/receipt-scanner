@@ -154,16 +154,38 @@ const Shareable = () => {
   const updateSelectedItems = async () => {
     console.log(selectedItems);
 
-    setUnclaimedItems(unclaimedItems.filter((item) => !selectedItems.includes(item.id)));
-    // Update database
-    const { data, error } = await supabase.from('item').update({ owner_nickname: nickname }).eq('transaction_id', id).in('id', selectedItems);
+    // Fetch the latest state of the selected items
+    const { data: latestItems, error: fetchError } = await supabase
+      .from('item')
+      .select('id, owner_nickname')
+      .in('id', selectedItems);
+
+    if (fetchError) {
+      console.error('Error fetching latest item states:', fetchError);
+      setError('Error fetching latest item states');
+      return;
+    }
+
+    // Filter out items that are already claimed by others
+    const unclaimedItemsToClaim = latestItems.filter((item) => !item.owner_nickname);
+
+    // Update database for unclaimed items
+    const { data, error } = await supabase
+      .from('item')
+      .update({ owner_nickname: nickname })
+      .eq('transaction_id', id)
+      .in('id', unclaimedItemsToClaim.map((item) => item.id));
+
     if (error) {
       console.error('Error updating items:', error);
       setError('Error updating items');
     } else {
       console.log('Items updated successfully:', data);
-      fetchItems();
     }
+
+    // Refresh the state to reflect the updated ownership
+    setSelectedItems([]); // Clear selected items for the current user
+    await fetchItems(); // Refresh items to reflect the updated state
   };
 
   const unclaimAllItems = async () => {
