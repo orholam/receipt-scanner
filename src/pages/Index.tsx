@@ -63,7 +63,6 @@ const Index = () => {
     } catch (error) {
         console.error('Error during OCR:', error);
         toast.error('An error occurred while capturing the receipt. Please try again.');
-        setIsOcrComplete(true);
         setHasError(true);
         setIsOcrComplete(true);
         setOcrResult(null);
@@ -94,6 +93,9 @@ const Index = () => {
       } catch (error) {
         console.error('Error during OCR:', error);
         toast.error('An error occurred while processing the sample receipt. Please try again.');
+        setHasError(true);
+        setIsOcrComplete(true);
+        setOcrResult(null);
       }
     };
     reader.readAsDataURL(blob);
