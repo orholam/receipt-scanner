@@ -38,6 +38,7 @@ const Index = () => {
   const [isOcrComplete, setIsOcrComplete] = useState(false);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(true);
+  const [hasError, setHasError] = useState(false);
   useEffect(() => {
     // const savedImage = localStorage.getItem('capturedReceipt');
     // if (savedImage) {
@@ -49,6 +50,7 @@ const Index = () => {
   const handleCapture = async (image: string) => {
     setCapturedImage(image);
     setIsScanning(false);
+    setHasError(false);
     try {
         const result = await performOcr(image);
         if (result.error) {
@@ -61,12 +63,16 @@ const Index = () => {
     } catch (error) {
         console.error('Error during OCR:', error);
         toast.error('An error occurred while capturing the receipt. Please try again.');
+        setHasError(true);
+        setIsOcrComplete(true);
+        setOcrResult(null);
     }
   };
 
   const handleTrySample = async () => {
     setIsPopupOpen(false);
     setIsScanning(false);
+    setHasError(false);
     localStorage.setItem('capturedReceipt', sampleReceipt);
 
     // Fetch the image if sampleReceipt is a URL
@@ -87,6 +93,9 @@ const Index = () => {
       } catch (error) {
         console.error('Error during OCR:', error);
         toast.error('An error occurred while processing the sample receipt. Please try again.');
+        setHasError(true);
+        setIsOcrComplete(true);
+        setOcrResult(null);
       }
     };
     reader.readAsDataURL(blob);
@@ -154,6 +163,17 @@ const Index = () => {
               <div className="mt-4 text-center">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
                 <p className="text-gray-700 mt-2">Receipt information is being processed...</p>
+              </div>
+            ) : hasError ? (
+              <div className="mt-4 text-center">
+                <p className="text-red-600">Failed to process receipt. Please try again.</p>
+                <Button
+                  onClick={handleReset}
+                  className="mt-4"
+                  variant="secondary"
+                >
+                  Try Again
+                </Button>
               </div>
             ) : (
               <ReceiptForm content={ocrResult} onSubmit={handleSubmit} />
