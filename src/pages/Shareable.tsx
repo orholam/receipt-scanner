@@ -18,6 +18,8 @@ const Shareable = () => {
   const [paymentUsername, setPaymentUsername] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState<boolean>(false); // Add state for help text
+  const helpText = "Claim your items, see your total, and pay back what you owe!";
   const supabase = useSupabase();
   const { id } = useParams();
 
@@ -152,16 +154,38 @@ const Shareable = () => {
   const updateSelectedItems = async () => {
     console.log(selectedItems);
 
-    setUnclaimedItems(unclaimedItems.filter((item) => !selectedItems.includes(item.id)));
-    // Update database
-    const { data, error } = await supabase.from('item').update({ owner_nickname: nickname }).eq('transaction_id', id).in('id', selectedItems);
+    // Fetch the latest state of the selected items
+    const { data: latestItems, error: fetchError } = await supabase
+      .from('item')
+      .select('id, owner_nickname')
+      .in('id', selectedItems);
+
+    if (fetchError) {
+      console.error('Error fetching latest item states:', fetchError);
+      setError('Error fetching latest item states');
+      return;
+    }
+
+    // Filter out items that are already claimed by others
+    const unclaimedItemsToClaim = latestItems.filter((item) => !item.owner_nickname);
+
+    // Update database for unclaimed items
+    const { data, error } = await supabase
+      .from('item')
+      .update({ owner_nickname: nickname })
+      .eq('transaction_id', id)
+      .in('id', unclaimedItemsToClaim.map((item) => item.id));
+
     if (error) {
       console.error('Error updating items:', error);
       setError('Error updating items');
     } else {
       console.log('Items updated successfully:', data);
-      fetchItems();
     }
+
+    // Refresh the state to reflect the updated ownership
+    setSelectedItems([]); // Clear selected items for the current user
+    await fetchItems(); // Refresh items to reflect the updated state
   };
 
   const unclaimAllItems = async () => {
@@ -224,16 +248,41 @@ const Shareable = () => {
           )}
         </div>
         <div className={`transition-opacity duration-700 ${isNicknameSet ? 'opacity-100' : 'opacity-0'}`}>
-          {isNicknameSet && (
-            <>
-              {paymentUsername && paymentMethod && (
-                <div className="flex justify-center mb-6">
-                  <p className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg">
-                    <b>{paymentMethod}</b>
-                    {paymentUsername}
-                  </p>
+          {isNicknameSet && paymentUsername && paymentMethod && (
+            <div className="flex justify-center mb-6 relative">
+              {paymentMethod === 'Venmo' ? (
+                <a
+                  href={`https://account.venmo.com/u/${paymentUsername.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg hover:underline"
+                >
+                  <b>{paymentMethod}</b>
+                  {paymentUsername}
+                </a>
+              ) : (
+                <p className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg">
+                  <b>{paymentMethod}</b>
+                  {paymentUsername}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowHelp(!showHelp)}
+                className="absolute top-[-10px] right-[-20px] text-black border border-black rounded-full w-8 h-8 flex items-center justify-center"
+                aria-label="Help"
+              >
+                ?
+              </button>
+              {showHelp && (
+                <div className="absolute top-10 right-[-50px] bg-white border border-gray-300 shadow-lg rounded-md p-4 w-64 z-10">
+                  <p className="text-sm text-gray-700">{helpText}</p>
                 </div>
               )}
+            </div>
+          )}
+          {isNicknameSet && (
+            <>
               <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{transactionName}</h1>
               <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
                 {Object.keys(claimedItems).map((item) => (
