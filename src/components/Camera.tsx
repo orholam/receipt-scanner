@@ -1,35 +1,32 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import Webcam from 'react-webcam';
+import React, { useCallback, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Camera as CameraIcon, Upload, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Camera as CameraIcon, Upload } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (image: string) => void;
 }
 
 const Camera: React.FC<CameraProps> = ({ onCapture }) => {
-  const webcamRef = useRef<Webcam>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isWebcamLoaded, setIsWebcamLoaded] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > 0);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setIsCapturing(true);
-      onCapture(imageSrc);
-      localStorage.setItem('capturedReceipt', imageSrc);
+    if (inputRef.current) {
+      inputRef.current.click();
+    }
+  }, []);
+
+  const handleImageCapture = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageSrc = reader.result as string;
+        setIsCapturing(true);
+        onCapture(imageSrc);
+        localStorage.setItem('capturedReceipt', imageSrc);
+      };
+      reader.readAsDataURL(file);
     }
   }, [onCapture]);
 
@@ -53,49 +50,40 @@ const Camera: React.FC<CameraProps> = ({ onCapture }) => {
     fileInput.click();
   }, [onCapture]);
 
-  const handleWebcamLoad = useCallback(() => {
-    setIsWebcamLoaded(true);
-  }, []);
-
   if (isCapturing) {
     return null;
   }
 
   return (
     <div className="relative">
-
-      <div className="camera-container shadow-lg bg-white p-4">
-        <Webcam
-          audio={false}
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          videoConstraints={{
-            facingMode: 'environment',
-          }}
-          className={`w-full h-full object-cover transition-opacity duration-500 ${isWebcamLoaded ? 'opacity-100 blur-none' : 'opacity-0 blur-lg'}`}
-          onUserMedia={handleWebcamLoad}
-        />
-        <div className="scanner-overlay">
-          <div className="scanning-line" />
+      <input
+        type="file"
+        ref={inputRef}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleImageCapture}
+      />
+      <div className="camera-container shadow-xl bg-white p-10 rounded-2xl flex flex-col items-center justify-center gap-8 max-w-md mx-auto border border-gray-100">
+        <div className="text-center space-y-3">
+          <h2 className="text-3xl font-bold text-gray-800">Scan Your Receipt</h2>
+          <p className="text-gray-500 text-lg">Take a photo or upload your receipt to get started</p>
         </div>
-        <div className="corner corner-tl" />
-        <div className="corner corner-tr" />
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex justify-center">
+        <div className="flex flex-col w-full gap-4">
           <Button 
             onClick={capture}
-            className="bg-blue-400 hover:bg-blue-500 rounded-full"
-            size="icon"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6 flex items-center justify-center gap-3 transition-all duration-200"
           >
             <CameraIcon className="h-6 w-6" />
+            Open Camera
           </Button>
-        </div>
-        <div className="absolute bottom-6 right-6 flex justify-center">
           <Button 
             onClick={upload}
-            className="bg-blue-400 hover:bg-blue-500 rounded-full"
-            size="icon"
+            variant="outline"
+            className="w-full text-lg py-6 flex items-center justify-center gap-3 hover:bg-gray-50 transition-all duration-200"
           >
             <Upload className="h-6 w-6" />
+            Upload Photo
           </Button>
         </div>
       </div>
