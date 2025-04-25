@@ -70,6 +70,28 @@ const preventAlphabet = (e: React.KeyboardEvent<HTMLInputElement>) => {
 };
 
 const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
+  useEffect(() => {
+    // Google Tag Manager script
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = "https://www.googletagmanager.com/gtag/js?id=G-ZZR0BT2LXR";
+    document.head.appendChild(script);
+
+    const inlineScript = document.createElement('script');
+    inlineScript.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-ZZR0BT2LXR');
+    `;
+    document.head.appendChild(inlineScript);
+
+    return () => {
+      document.head.removeChild(script);
+      document.head.removeChild(inlineScript);
+    };
+  }, []);
+
   const [currentPage, setCurrentPage] = useState<number>(0); // Track current page
   const [id, setId] = useState<string>('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);

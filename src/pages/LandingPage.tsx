@@ -4,6 +4,7 @@ import appScreenshot from '../assets/billclub9.jpg';
 import appScreenshot2 from '../assets/billclub2.jpg';
 import appScreenshot3 from '../assets/billclub5.jpg';
 import { Link } from 'react-router-dom';
+
 const LandingPage: React.FC = () => {
     const [hasScrolled, setHasScrolled] = useState(false);
     const [pricingToggle, setPricingToggle] = useState(false);
@@ -16,6 +17,28 @@ const LandingPage: React.FC = () => {
         window.addEventListener('scroll', handleScroll);
         return () => {
             window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Google Tag Manager script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = "https://www.googletagmanager.com/gtag/js?id=G-ZZR0BT2LXR";
+        document.head.appendChild(script);
+
+        const inlineScript = document.createElement('script');
+        inlineScript.innerHTML = `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-ZZR0BT2LXR');
+        `;
+        document.head.appendChild(inlineScript);
+
+        return () => {
+            document.head.removeChild(script);
+            document.head.removeChild(inlineScript);
         };
     }, []);
 

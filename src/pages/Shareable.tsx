@@ -6,6 +6,28 @@ import Header from '@/components/Header';
 import venmoLogo from '@/assets/venmo.svg';
 
 const Shareable = () => {
+  useEffect(() => {
+    // Google Tag Manager script
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = "https://www.googletagmanager.com/gtag/js?id=G-ZZR0BT2LXR";
+    document.head.appendChild(script);
+
+    const inlineScript = document.createElement('script');
+    inlineScript.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-ZZR0BT2LXR');
+    `;
+    document.head.appendChild(inlineScript);
+
+    return () => {
+      document.head.removeChild(script);
+      document.head.removeChild(inlineScript);
+    };
+  }, []);
+
   const [isNicknameSet, setIsNicknameSet] = useState<boolean>(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
