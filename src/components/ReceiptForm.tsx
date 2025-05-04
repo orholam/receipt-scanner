@@ -6,6 +6,7 @@ import { Copy, MinusCircle, PlusCircle, Split } from 'lucide-react';
 import { useSupabase } from '@/SupabaseContext';
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import ReactQRCode from 'react-qr-code'; // Replace qrcode.react with react-qr-code
 
 interface ReceiptFormProps {
   onSubmit: (data: any) => void;
@@ -18,6 +19,7 @@ type Transaction = {
   items: {
     itemName: string;
     itemCost: number;
+    quantity: number | string;
   }[];
   tip?: number;
   tax: number;
@@ -92,6 +94,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const [helpText, setHelpText] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [isPaymentMethodEnabled, setIsPaymentMethodEnabled] = useState<boolean>(false); // Default set to false
+  const [showQRCode, setShowQRCode] = useState<boolean>(false); // State to toggle QR code visibility
 
   const getHelpText = () => {
     switch (currentPage) {
@@ -171,6 +174,17 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     }
   }, [totalAfterTax, tip]);
 
+  useEffect(() => {
+    // Ensure all items have a default quantity of 1 if not already set
+    setLocalContent(prevContent => ({
+      ...prevContent,
+      items: prevContent.items.map(item => ({
+        ...item,
+        quantity: item.quantity || 1, // Default to 1 if quantity is blank or undefined
+      })),
+    }));
+  }, [content]);
+
   const handleRemoveItem = (index: number) => {
     const updatedItems = localContent.items.filter((_, i) => i !== index);
     setLocalContent({ ...localContent, items: updatedItems });
@@ -187,9 +201,28 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setFormChanged(true); // Ensure formChanged is set to true
   };
 
+  const handleQuantityChange = (index: number, value: string) => {
+    setLocalContent(prevContent => {
+      const updatedItems = prevContent.items.map((item, i) =>
+        i === index ? { ...item, quantity: value } : item
+      );
+      return { ...prevContent, items: updatedItems };
+    });
+    setFormChanged(true); // Ensure formChanged is set to true
+  };
+
+  const handleQuantityBlur = (index: number) => {
+    setLocalContent(prevContent => {
+      const updatedItems = prevContent.items.map((item, i) =>
+        i === index ? { ...item, quantity: item.quantity === '' || parseInt(item.quantity as string, 10) < 1 ? 1 : item.quantity } : item
+      );
+      return { ...prevContent, items: updatedItems };
+    });
+  };
+
   const handleAddItem = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent form submission
-    const newItem = { itemName: '', itemCost: 0 };
+    const newItem = { itemName: '', itemCost: 0, quantity: 1 }; // Default quantity set to 1
     setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
   };
 
@@ -201,7 +234,8 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       const splitCountInt = parseInt(splitCount, 10);
       const newItems = Array.from({ length: splitCountInt }, (_, i) => ({
         itemName: `${itemToSplit.itemName} (${i + 1})`,
-        itemCost: parseFloat((itemToSplit.itemCost / splitCountInt).toFixed(2))
+        itemCost: parseFloat((itemToSplit.itemCost / splitCountInt).toFixed(2)),
+        quantity: 1
       }));
       let updatedItems = [
         ...localContent.items.slice(0, index),
@@ -227,11 +261,17 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     return formData;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceGenerate: boolean = false) => {
     e.preventDefault();
+
+    if (id && !forceGenerate) {
+      console.log('Link already exists. No new link will be generated.');
+      return; // Prevent generating a new link unless forced
+    }
+
     const data = collectFormData(); // Collect all form data
 
-    if (formChanged) {
+    if (formChanged || forceGenerate) {
       setShareablePageLoading(true);
       const generatedId = await generateIdBackup();
       setId(generatedId);
@@ -261,7 +301,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             transaction_id: generatedId,
             item_name: item.itemName,
             cost: item.itemCost,
-            quantity: 1,
+            quantity: item.quantity,
             owner_nickname: '',
           });
           if (itemsError) {
@@ -279,6 +319,10 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   };
 
   const handleCopy = () => {
+    if (!id) {
+      console.error('No shareable link available to copy.');
+      return; // Prevent any action if no link exists
+    }
     const fullUrl = `${window.location.origin}/share/${id}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
       console.log('URL copied to clipboard:', fullUrl);
@@ -327,6 +371,24 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   };
 
   const handleNextPage = () => {
+    if (currentPage === 0) {
+      // Split items with quantity > 1 into multiple items
+      setLocalContent(prevContent => {
+        const updatedItems = prevContent.items.flatMap(item => {
+          if (item.quantity > 1) {
+            const splitCost = parseFloat((item.itemCost / item.quantity).toFixed(2));
+            return Array.from({ length: item.quantity }, (_, idx) => ({
+              ...item,
+              itemName: `${item.itemName} (${idx + 1})`,
+              itemCost: splitCost,
+              quantity: 1,
+            }));
+          }
+          return [item];
+        });
+        return { ...prevContent, items: updatedItems };
+      });
+    }
     if (currentPage < 2) setCurrentPage(currentPage + 1);
   };
 
@@ -339,11 +401,16 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
       case 0:
         return (
           <>
+            <h2 className="text-xl font-bold mb-4">Step 1: Add Items</h2>
+            <p className="text-gray-600 mb-4">Add items and their costs here. Ensure all items from the receipt are added. Adjust quantities as needed.</p>
             <div className="space-y-2">
               <Label htmlFor="vendor">Vendor</Label>
               <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} onChange={(e) => setLocalContent({ ...localContent, businessName: e.target.value })} />
             </div>
             <div className="flex space-x-4 items-center">
+              <div className="w-1/6">
+                <Label>Quantity</Label>
+              </div>
               <div className="flex-1">
                 <Label>Item Name</Label>
               </div>
@@ -353,6 +420,18 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             </div>
             {localContent.items && localContent.items.map((item, index) => (
               <div key={`${item.itemName}-${index}`} className="flex space-x-4 items-center">
+                <div className="w-1/6">
+                  <Input
+                    id={`quantity-${index}`}
+                    name={`quantity-${index}`}
+                    type="number"
+                    min="1"
+                    value={item.quantity === '' ? '' : item.quantity} // Allow empty string while editing
+                    onChange={(e) => handleQuantityChange(index, e.target.value)}
+                    onBlur={() => handleQuantityBlur(index)} // Reset to 1 if empty or invalid
+                    onKeyDown={(e) => { preventEnterKey(e); preventMinusSymbol(e); preventAlphabet(e); }}
+                  />
+                </div>
                 <div className="flex-1 space-y-2">
                   <Input
                     id={`itemName-${index}`}
@@ -377,12 +456,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                 >
                   <MinusCircle size={20} />
                 </button>
-                <button
-                  onClick={(e) => handleSplitItem(index, e)}
-                  className="text-blue-500 hover:text-blue-600 flex items-center"
-                >
-                  <Split size={20} />
-                </button>
               </div>
             ))}
             <Button 
@@ -395,194 +468,209 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             </Button>
           </>
         );
-      case 1: //Box for tax, tip, and total
-        return (
-          <div id="totals" className="space-y-2 bg-gradient-to-b from-blue-50 to-white shadow-lg rounded-lg p-4">  
-            {/* Adjusted margin-top to mt-[-10px] to move the box closer */}
-            <div className="space-y-2">
-              <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-                <Input 
-                  id="totalBeforeTax" 
-                  name="totalBeforeTax" 
-                  value={totalBeforeTax !== null ? totalBeforeTax.toString() : ''} 
-                  className="pl-6 bg-gray-300 appearance-none" 
-                  type="number" 
-                  step="0.01" 
-                  readOnly 
-                  onKeyDown={preventEnterKey} 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="taxFees">Tax/Fees</Label>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-                <Input 
-                  id="tax" 
-                  name="tax" 
-                  value={tax !== null ? tax.toString() : ''} 
-                  onChange={handleTaxChange} 
-                  onKeyDown={preventEnterKey} 
-                  className="pl-6" 
-                  type="number" 
-                  step="0.01" 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="totalAfterTax">Total After Tax</Label>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-                <Input 
-                  id="totalAfterTax" 
-                  name="totalAfterTax" 
-                  value={totalAfterTax !== null ? totalAfterTax.toString() : ''} 
-                  onChange={handleTotalAfterTaxChange} 
-                  onKeyDown={preventEnterKey} 
-                  className="pl-6" 
-                  type="number" 
-                  step="0.01" 
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="tip">Tip</Label>
-              <div className="flex flex-row items-center gap-1">
-                <Button type="button" onClick={() => {setTip(0); setTipPercentage(0)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0 ? '#D5E6FF' : '' }}>0%</Button>
-                <Button type="button" onClick={() => {setTip(parseFloat((.15*totalAfterTax).toFixed(2))); setTipPercentage(0.15)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.15 ? '#D5E6FF' : '' }}>15%</Button>
-                <Button type="button" onClick={() => {setTip(parseFloat((.18*totalAfterTax).toFixed(2))); setTipPercentage(0.18)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.18 ? '#D5E6FF' : '' }}>18%</Button>
-                <Button type="button" onClick={() => {setTip(parseFloat((.20*totalAfterTax).toFixed(2))); setTipPercentage(0.20)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.20 ? '#D5E6FF' : '' }}>20%</Button>
-                <Button type="button" onClick={() => {setTip(parseFloat((.22*totalAfterTax).toFixed(2))); setTipPercentage(0.22)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.22 ? '#D5E6FF' : '' }}>22%</Button>
-              </div>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-                <Input 
-                  id="tip" 
-                  name="tip" 
-                  value={tip !== null ? tip.toString() : ''} 
-                  className="pl-6" 
-                  type="number" 
-                  step="0.01" 
-                  onChange={handleTipChange}
-                  onKeyDown={preventEnterKey} 
-                />
-              </div>
-            </div>
-          </div>
-        );
-      case 2:
+      case 1:
         return (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethodToggle">Enable Payment Method</Label>
-              <Switch
-                id="paymentMethodToggle"
-                checked={isPaymentMethodEnabled}
-                onCheckedChange={setIsPaymentMethodEnabled}
-              />
-            </div>
-            <div
-              className={`space-y-2 mt-4 ${isPaymentMethodEnabled ? '' : 'opacity-50 pointer-events-none'}`}
-            >
-              <div className="flex flex-row items-center gap-3">
-                <div className="w-1/3">
-                  <Select onValueChange={setPaymentMethod} value={paymentMethod}>
-                    <SelectTrigger>
-                      {paymentMethod}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentMethods.map((method) => (
-                        <SelectItem key={method} value={method}>
-                          {method}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <h2 className="text-xl font-bold mb-4">Step 2: Enter Totals</h2>
+            <p className="text-gray-600 mb-4">Enter tax, tip, and total amounts. Adjust values to ensure accuracy.</p>
+            <div id="totals" className="space-y-2 bg-gradient-to-b from-blue-50 to-white shadow-lg rounded-lg p-4">
+              <div className="space-y-2">
+                <Label htmlFor="totalBeforeTax">Total Before Tax</Label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+                  <Input 
+                    id="totalBeforeTax" 
+                    name="totalBeforeTax" 
+                    value={totalBeforeTax !== null ? totalBeforeTax.toString() : ''} 
+                    className="pl-6 bg-gray-300 appearance-none" 
+                    type="number" 
+                    step="0.01" 
+                    readOnly 
+                    onKeyDown={preventEnterKey} 
+                  />
                 </div>
-                <div className="flex-1 relative">
-                  {paymentMethod === 'Venmo' && (
-                    <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-black">@</span>
-                  )}
-                  <Input
-                    id="paymentUsername"
-                    name="paymentUsername"
-                    value={
-                      paymentMethod === 'Venmo'
-                        ? paymentUsername !== null
-                          ? paymentUsername.toString().replace('@', '')
-                          : ''
-                        : paymentUsername || ''
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setPaymentUsername(
-                        paymentMethod === 'Venmo'
-                          ? value.startsWith('@')
-                            ? value.substring(1)
-                            : value
-                          : value
-                      );
-                    }}
-                    onKeyDown={preventEnterKey}
-                    placeholder={
-                      paymentMethod === 'Venmo'
-                        ? 'Please enter your username'
-                        : 'Please enter your number'
-                    }
-                    className={`pl-${paymentMethod === 'Venmo' ? '6' : '3'} text-black placeholder-gray-500`}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="taxFees">Tax/Fees</Label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+                  <Input 
+                    id="tax" 
+                    name="tax" 
+                    value={tax !== null ? tax.toString() : ''} 
+                    onChange={handleTaxChange} 
+                    onKeyDown={preventEnterKey} 
+                    className="pl-6" 
+                    type="number" 
+                    step="0.01" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="totalAfterTax">Total After Tax</Label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+                  <Input 
+                    id="totalAfterTax" 
+                    name="totalAfterTax" 
+                    value={totalAfterTax !== null ? totalAfterTax.toString() : ''} 
+                    onChange={handleTotalAfterTaxChange} 
+                    onKeyDown={preventEnterKey} 
+                    className="pl-6" 
+                    type="number" 
+                    step="0.01" 
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="tip">Tip</Label>
+                <div className="flex flex-row items-center gap-1">
+                  <Button type="button" onClick={() => {setTip(0); setTipPercentage(0)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0 ? '#D5E6FF' : '' }}>0%</Button>
+                  <Button type="button" onClick={() => {setTip(parseFloat((.15*totalAfterTax).toFixed(2))); setTipPercentage(0.15)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.15 ? '#D5E6FF' : '' }}>15%</Button>
+                  <Button type="button" onClick={() => {setTip(parseFloat((.18*totalAfterTax).toFixed(2))); setTipPercentage(0.18)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.18 ? '#D5E6FF' : '' }}>18%</Button>
+                  <Button type="button" onClick={() => {setTip(parseFloat((.20*totalAfterTax).toFixed(2))); setTipPercentage(0.20)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.20 ? '#D5E6FF' : '' }}>20%</Button>
+                  <Button type="button" onClick={() => {setTip(parseFloat((.22*totalAfterTax).toFixed(2))); setTipPercentage(0.22)}} className="flex-1 border border-blue-400 rounded-sm p-1 text-center text-black bg-transparent hover:bg-[#D5E6FF]" style={{ backgroundColor: tipPercentage === 0.22 ? '#D5E6FF' : '' }}>22%</Button>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+                  <Input 
+                    id="tip" 
+                    name="tip" 
+                    value={tip !== null ? tip.toString() : ''} 
+                    className="pl-6" 
+                    type="number" 
+                    step="0.01" 
+                    onChange={handleTipChange}
+                    onKeyDown={preventEnterKey} 
                   />
                 </div>
               </div>
             </div>
-            <hr className="my-4 border-gray-500" />
-            <div className="space-y-2 mt-6">
-              <Label htmlFor="grandTotal" className="text-xl">Grand Total</Label>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
-                <p className="pl-6 py-2 text-2xl">{grandTotal !== null ? grandTotal.toFixed(2) : ''}</p>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <h2 className="text-xl font-bold mb-4">Step 3: Generate Shareable Link</h2>
+            <p className="text-gray-600 mb-4">Generate a shareable link, share with your friends, and select your own items! Please generate a new link for any new changes! Use our optional payment method, and enter a username.</p>
+            <div className="space-y-2">
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethodToggle">Enable Payment Method</Label>
+                <Switch
+                  id="paymentMethodToggle"
+                  checked={isPaymentMethodEnabled}
+                  onCheckedChange={setIsPaymentMethodEnabled}
+                />
               </div>
-            </div>
-            <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
-              <Button
-                type="submit"
-                className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isButtonDisabled || shareablePageLoading}
+              <div
+                className={`space-y-2 mt-4 ${isPaymentMethodEnabled ? '' : 'opacity-50 pointer-events-none'}`}
               >
-                {shareablePageLoading ? 'Generating Link...' : 'Generate Link to Share with Friends'}
-              </Button>
-            </div>
-            {isButtonDisabled && (
-              <p className="text-red-500 text-sm mt-2 text-center">
-                {totalAfterTax <= 0 ? 'Total after tax cannot be negative' : 
-                totalAfterTax < totalBeforeTax ? 'Tax cannot be negative' : 
-                tax < 0 ? 'Tax cannot be negative.' : 
-                'Please ensure all item costs are non-negative and total after tax is valid.'}
-              </p>
-            )}
-            {shareablePageLoading && (
-              <div className="mt-4 text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                <p className="text-gray-700 mt-2">Creating your shareable link...</p>
-              </div>
-            )}
-            {shareablePageCreated && (
-              <div className="mt-4 text-center">
-                <p className="text-gray-700">Shareable Page URL:</p>
-                <div className="flex justify-center items-center space-x-2">
-                  <a href={`/share/${id}`} target="_blank" className="text-blue-500 hover:underline">
-                    {`/share/${id}`}
-                  </a>
-                  <button onClick={handleCopy} className="text-gray-500 hover:text-gray-700">
-                    <Copy size={16} />
-                  </button>
+                <div className="flex flex-row items-center gap-3">
+                  <div className="w-1/3">
+                    <Select onValueChange={setPaymentMethod} value={paymentMethod}>
+                      <SelectTrigger>
+                        {paymentMethod}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentMethods.map((method) => (
+                          <SelectItem key={method} value={method}>
+                            {method}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1 relative">
+                    {paymentMethod === 'Venmo' && (
+                      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-black">@</span>
+                    )}
+                    <Input
+                      id="paymentUsername"
+                      name="paymentUsername"
+                      value={
+                        paymentMethod === 'Venmo'
+                          ? paymentUsername !== null
+                            ? paymentUsername.toString().replace('@', '')
+                            : ''
+                          : paymentUsername || ''
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPaymentUsername(
+                          paymentMethod === 'Venmo'
+                            ? value.startsWith('@')
+                              ? value.substring(1)
+                              : value
+                            : value
+                        );
+                      }}
+                      onKeyDown={preventEnterKey}
+                      placeholder={
+                        paymentMethod === 'Venmo'
+                          ? 'Please enter your username'
+                          : 'Please enter your number'
+                      }
+                      className={`pl-${paymentMethod === 'Venmo' ? '6' : '3'} text-black placeholder-gray-500`}
+                    />
+                  </div>
                 </div>
               </div>
-            )}
+              <hr className="my-4 border-gray-500" />
+              <div className="space-y-2 mt-6">
+                <Label htmlFor="grandTotal" className="text-xl">Grand Total</Label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2">$</span>
+                  <p className="pl-6 py-2 text-2xl">{grandTotal !== null ? grandTotal.toFixed(2) : ''}</p>
+                </div>
+              </div>
+              <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
+                <Button
+                  type="submit"
+                  onClick={(e) => handleSubmit(e, true)} // Force link generation when "Generate Link" is clicked
+                  className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isButtonDisabled || shareablePageLoading}
+                >
+                  {shareablePageLoading ? 'Generating Link...' : 'Generate Link to Share with Friends'}
+                </Button>
+              </div>
+              {isButtonDisabled && (
+                <p className="text-red-500 text-sm mt-2 text-center">
+                  {totalAfterTax <= 0 ? 'Total after tax cannot be negative' : 
+                  totalAfterTax < totalBeforeTax ? 'Tax cannot be negative' : 
+                  tax < 0 ? 'Tax cannot be negative.' : 
+                  'Please ensure all item costs are non-negative and total after tax is valid.'}
+                </p>
+              )}
+              {shareablePageLoading && (
+                <div className="mt-4 text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                  <p className="text-gray-700 mt-2">Creating your shareable link...</p>
+                </div>
+              )}
+              {shareablePageCreated && (
+                <div className="mt-4 text-center">
+                  <p className="text-gray-700">Shareable Page URL:</p>
+                  <div className="flex justify-center items-center space-x-2">
+                    <a href={`/share/${id}`} target="_blank" className="text-blue-500 hover:underline">
+                      {`/share/${id}`}
+                    </a>
+                    <button 
+                      onClick={handleCopy} 
+                      className={`text-gray-500 hover:text-gray-700 ${!id ? 'cursor-not-allowed opacity-50' : ''}`} 
+                      disabled={!id} // Disable button if no link exists
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  <div className="mt-8 flex justify-center">
+                    <ReactQRCode value={`${window.location.origin}/share/${id}`} size={256} />
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         );
       default:
@@ -591,7 +679,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
       <div className="relative">
         <button
           type="button"
