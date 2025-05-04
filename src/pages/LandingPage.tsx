@@ -4,6 +4,7 @@ import appScreenshot from '../assets/billclub9.jpg';
 import appScreenshot2 from '../assets/billclub2.jpg';
 import appScreenshot3 from '../assets/billclub5.jpg';
 import { Link } from 'react-router-dom';
+
 const LandingPage: React.FC = () => {
     const [hasScrolled, setHasScrolled] = useState(false);
     const [pricingToggle, setPricingToggle] = useState(false);
@@ -16,6 +17,32 @@ const LandingPage: React.FC = () => {
         window.addEventListener('scroll', handleScroll);
         return () => {
             window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Google Tag Manager script for <head>
+        const headScript = document.createElement('script');
+        headScript.innerHTML = `
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-ML2ZRPGF');
+        `;
+        document.head.appendChild(headScript);
+
+        // Google Tag Manager (noscript) for <body>
+        const noscript = document.createElement('noscript');
+        noscript.innerHTML = `
+          <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-ML2ZRPGF"
+          height="0" width="0" style="display:none;visibility:hidden"></iframe>
+        `;
+        document.body.insertBefore(noscript, document.body.firstChild);
+
+        return () => {
+            document.head.removeChild(headScript);
+            document.body.removeChild(noscript);
         };
     }, []);
 

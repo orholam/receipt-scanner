@@ -1,12 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSupabase } from '@/SupabaseContext';
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react'; // Import the ArrowLeft icon
 import Header from '@/components/Header';
 import venmoLogo from '@/assets/venmo.svg';
 import Congratulations from '@/components/modals/congratulations';
 
 const Shareable = () => {
+  useEffect(() => {
+    // Google Tag Manager script for <head>
+    const headScript = document.createElement('script');
+    headScript.innerHTML = `
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-ML2ZRPGF');
+    `;
+    document.head.appendChild(headScript);
+
+    // Google Tag Manager (noscript) for <body>
+    const noscript = document.createElement('noscript');
+    noscript.innerHTML = `
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-ML2ZRPGF"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    `;
+    document.body.insertBefore(noscript, document.body.firstChild);
+
+    return () => {
+      document.head.removeChild(headScript);
+      document.body.removeChild(noscript);
+    };
+  }, []);
+
   const [isNicknameSet, setIsNicknameSet] = useState<boolean>(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -20,7 +46,7 @@ const Shareable = () => {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState<boolean>(false); // Add state for help text
-  const helpText = "Claim your items, see your total, and pay back what you owe!";
+  const helpText = "Select to claim your items, see your total, and pay back what you owe!";
   const supabase = useSupabase();
   const { id } = useParams();
   const [showCongratulations, setShowCongratulations] = useState(false);
@@ -70,32 +96,24 @@ const Shareable = () => {
     const claimedItems = {};
 
     claimedItemsRaw.forEach((item) => {
-      if (!claimedItems[item.owner_nickname]) {
-        claimedItems[item.owner_nickname] = [];
+      const ownerNickname = item.owner_nickname.toLowerCase(); // Normalize to lowercase
+      if (!claimedItems[ownerNickname]) {
+        claimedItems[ownerNickname] = [];
       }
-      claimedItems[item.owner_nickname].push(item);
+      claimedItems[ownerNickname].push(item);
     });
 
     const individualTotals = {};
     Object.keys(claimedItems).forEach((nickname) => {
-      console.log("nickname", nickname);
-      console.log("claimedItems[nickname]", claimedItems[nickname]);
-      const individualPreTax = claimedItems[nickname].reduce((acc, item) => acc + item.cost, 0);
-      console.log("individualPreTax", individualPreTax);
-      console.log("total", transaction.total);
-      console.log("tax", transaction.tax);
-      console.log("tip", transaction.tip);
+      const normalizedNickname = nickname.toLowerCase(); // Ensure consistent comparison
+      const individualPreTax = claimedItems[normalizedNickname].reduce((acc, item) => acc + item.cost, 0);
       const { individualTotal, individualTax, individualTip } = calcTaxTipTotalShare(transaction.total, transaction.tax, transaction.tip, individualPreTax);
-      individualTotals[nickname] = { individualTotal, individualTax, individualTip };
+      individualTotals[normalizedNickname] = { individualTotal, individualTax, individualTip };
     });
-    console.log("individualTotals", individualTotals);
 
     setClaimedItems(claimedItems);
     setUnclaimedItems(unclaimedItems);
     setIndividualTotals(individualTotals);
-    console.log("items", items);
-    console.log("claimed items", claimedItems);
-    console.log("unclaimed items", unclaimedItems);
   };
 
   // Fetch items
@@ -169,7 +187,9 @@ const Shareable = () => {
     }
 
     // Filter out items that are already claimed by others
-    const unclaimedItemsToClaim = latestItems.filter((item) => !item.owner_nickname);
+    const unclaimedItemsToClaim = latestItems.filter(
+      (item) => !item.owner_nickname || item.owner_nickname.toLowerCase() === nickname?.toLowerCase()
+    );
 
     // Check if this is the first claim for this nickname
     const { data: existingClaims } = await supabase
@@ -182,7 +202,7 @@ const Shareable = () => {
     // Update database for unclaimed items
     const { data, error } = await supabase
       .from('item')
-      .update({ owner_nickname: nickname })
+      .update({ owner_nickname: nickname?.toLowerCase() }) // Normalize nickname to lowercase
       .eq('transaction_id', id)
       .in('id', unclaimedItemsToClaim.map((item) => item.id));
 
@@ -209,7 +229,7 @@ const Shareable = () => {
       .from('item')
       .update({ owner_nickname: null })
       .eq('transaction_id', id)
-      .eq('owner_nickname', nickname);
+      .eq('owner_nickname', nickname?.toLowerCase()); // Normalize nickname to lowercase
     if (error) {
       console.error('Error unclaiming items:', error);
       setError('Error unclaiming items');
@@ -238,7 +258,7 @@ const Shareable = () => {
                 type="text"
                 placeholder="Type here..."
                 className="w-full px-4 py-2 rounded-full border text-center"
-                onChange={(e) => setNickname(e.target.value)}
+                onChange={(e) => setNickname(e.target.value.toLowerCase())} // Normalize input to lowercase
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && nickname && nickname.trim() !== '') {
                     setIsNicknameSet(true);
@@ -264,41 +284,47 @@ const Shareable = () => {
           )}
         </div>
         <div className={`transition-opacity duration-700 ${isNicknameSet ? 'opacity-100' : 'opacity-0'}`}>
-          {isNicknameSet && paymentUsername && paymentMethod && (
-            <div className="flex justify-center mb-6 relative">
-              {paymentMethod === 'Venmo' ? (
-                <a
-                  href={`https://account.venmo.com/u/${paymentUsername.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg hover:underline"
-                >
-                  <b>{paymentMethod}</b>
-                  {paymentUsername}
-                </a>
-              ) : (
-                <p className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg">
-                  <b>{paymentMethod}</b>
-                  {paymentUsername}
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowHelp(!showHelp)}
-                className="absolute top-[-10px] right-[-20px] text-black border border-black rounded-full w-8 h-8 flex items-center justify-center"
-                aria-label="Help"
-              >
-                ?
-              </button>
-              {showHelp && (
-                <div className="absolute top-10 right-[-50px] bg-white border border-gray-300 shadow-lg rounded-md p-4 w-64 z-10">
-                  <p className="text-sm text-gray-700">{helpText}</p>
-                </div>
-              )}
-            </div>
-          )}
           {isNicknameSet && (
             <>
+              <div className="flex items-center mb-4">
+                <ArrowLeft
+                  className="h-6 w-6 cursor-pointer text-gray-800 hover:text-gray-600" // Reduced size for smaller button
+                  onClick={() => setIsNicknameSet(false)} // Go back to the nickname input page
+                />
+              </div>
+              <div className="flex justify-center mb-6 relative">
+                {paymentUsername && paymentMethod ? (
+                  paymentMethod === 'Venmo' ? (
+                    <a
+                      href={`https://account.venmo.com/u/${paymentUsername.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg hover:underline"
+                    >
+                      <b>{paymentMethod}</b>
+                      {paymentUsername}
+                    </a>
+                  ) : (
+                    <p className="px-4 py-2 inline-flex items-center gap-2 text-center rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-lg">
+                      <b>{paymentMethod}</b>
+                      {paymentUsername}
+                    </p>
+                  )
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setShowHelp(!showHelp)}
+                  className="absolute top-[-45px] right-[-20px] text-black border border-black rounded-full w-8 h-8 flex items-center justify-center" // Adjusted top position further upward
+                  aria-label="Help"
+                >
+                  ?
+                </button>
+                {showHelp && (
+                  <div className="absolute top-10 right-[-50px] bg-white border border-gray-300 shadow-lg rounded-md p-4 w-64 z-10">
+                    <p className="text-sm text-gray-700">{helpText}</p>
+                  </div>
+                )}
+              </div>
               <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{transactionName}</h1>
               <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
                 {Object.keys(claimedItems).map((item) => (
