@@ -4,6 +4,7 @@ import { useSupabase } from '@/SupabaseContext';
 import { X } from 'lucide-react';
 import Header from '@/components/Header';
 import venmoLogo from '@/assets/venmo.svg';
+import Congratulations from '@/components/modals/congratulations';
 
 const Shareable = () => {
   const [isNicknameSet, setIsNicknameSet] = useState<boolean>(false);
@@ -22,6 +23,7 @@ const Shareable = () => {
   const helpText = "Claim your items, see your total, and pay back what you owe!";
   const supabase = useSupabase();
   const { id } = useParams();
+  const [showCongratulations, setShowCongratulations] = useState(false);
 
   // Move handleUpdates inside component
   const handleUpdates = (payload) => {
@@ -169,6 +171,14 @@ const Shareable = () => {
     // Filter out items that are already claimed by others
     const unclaimedItemsToClaim = latestItems.filter((item) => !item.owner_nickname);
 
+    // Check if this is the first claim for this nickname
+    const { data: existingClaims } = await supabase
+      .from('item')
+      .select('id')
+      .eq('owner_nickname', nickname);
+    
+    const isFirstClaim = !existingClaims || existingClaims.length === 0;
+
     // Update database for unclaimed items
     const { data, error } = await supabase
       .from('item')
@@ -181,11 +191,17 @@ const Shareable = () => {
       setError('Error updating items');
     } else {
       console.log('Items updated successfully:', data);
+      // Calculate the total owed for the newly claimed items
+      await fetchItems(); // Refresh items to get updated totals
+      
+      if (isFirstClaim) {
+        const userTotal = individualTotals[nickname]?.individualTotal || 0;
+        setShowCongratulations(true);
+      }
     }
 
-    // Refresh the state to reflect the updated ownership
-    setSelectedItems([]); // Clear selected items for the current user
-    await fetchItems(); // Refresh items to reflect the updated state
+    // Clear selected items for the current user
+    setSelectedItems([]);
   };
 
   const unclaimAllItems = async () => {
@@ -335,6 +351,13 @@ const Shareable = () => {
           </div>
         </div>
       </div>
+      {showCongratulations && individualTotals[nickname] && (
+        <Congratulations 
+          isOpen={showCongratulations}
+          onClose={() => setShowCongratulations(false)}
+          value={individualTotals[nickname].individualTotal}
+        />
+      )}
     </div>
   );
 };
