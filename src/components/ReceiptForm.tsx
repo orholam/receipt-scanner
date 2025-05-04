@@ -175,12 +175,14 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   }, [totalBeforeTax, totalAfterTax, tax]);
 
   useEffect(() => {
-    setFormChanged(true);
-  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod]);
+    const handleFormChange = () => {
+      setFormChanged(true);
+    };
 
-  useEffect(() => {
-    setFormChanged(true); // Ensure formChanged is set to true when payment method or username changes
-  }, [paymentMethod, paymentUsername]);
+    // Watch only the fields that represent actual form data
+    const dependencies = [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod, paymentUsername];
+    handleFormChange(); // Trigger formChanged only when these dependencies change
+  }, [localContent, tax, totalBeforeTax, totalAfterTax, tip, paymentMethod, paymentUsername]);
 
   useEffect(() => {
     setLocalContent(content);
@@ -290,58 +292,63 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const handleSubmit = async (e: React.FormEvent, forceGenerate: boolean = false) => {
     e.preventDefault();
 
-    if (id && !forceGenerate) {
-      console.log('Link already exists. No new link will be generated.');
-      return; // Prevent generating a new link unless forced
+    // Ensure the form is valid before generating a link
+    if (isButtonDisabled) {
+      console.error('Form is invalid. Cannot generate a link.');
+      return;
+    }
+
+    // Prevent generating a new link if one already exists and forceGenerate is false
+    if (id && !formChanged && !forceGenerate) {
+      console.log('No changes detected. Link generation skipped.');
+      return;
     }
 
     const data = collectFormData(); // Collect all form data
 
-    if (formChanged || forceGenerate) {
-      setShareablePageLoading(true);
-      const generatedId = await generateIdBackup();
-      setId(generatedId);
+    setShareablePageLoading(true);
+    const generatedId = await generateIdBackup();
+    setId(generatedId);
 
-      // Create new transaction row in Supabase
-      const { data: transactionData, error } = await supabase.from('transaction').insert({
-        id: generatedId,
-        date: new Date().toISOString(),
-        restaurant: data.vendor,
-        tip: data.tip,
-        tax: data.tax,
-        total: Number(data.totalAfterTax),
-        payment_username: data.paymentUsername,
-        payment_method: data.paymentMethod,
-        status: 'incomplete',
-        owner_id: '123',
-      });
+    // Create new transaction row in Supabase
+    const { data: transactionData, error } = await supabase.from('transaction').insert({
+      id: generatedId,
+      date: new Date().toISOString(),
+      restaurant: data.vendor,
+      tip: data.tip,
+      tax: data.tax,
+      total: Number(data.totalAfterTax),
+      payment_username: data.paymentUsername,
+      payment_method: data.paymentMethod,
+      status: 'incomplete',
+      owner_id: '123',
+    });
 
-      if (error) {
-        console.error('Error creating transaction:', error);
-      } else {
-        console.log('Transaction created successfully:', transactionData);
+    if (error) {
+      console.error('Error creating transaction:', error);
+    } else {
+      console.log('Transaction created successfully:', transactionData);
 
-        // Create new item rows in Supabase that reference the transaction
-        for (const item of data.items) {
-          const { data: itemsData, error: itemsError } = await supabase.from('item').insert({
-            transaction_id: generatedId,
-            item_name: item.itemName,
-            cost: item.itemCost,
-            quantity: item.quantity,
-            owner_nickname: '',
-          });
-          if (itemsError) {
-            console.error('Error creating items:', itemsError);
-          } else {
-            console.log('Items created successfully:', itemsData);
-          }
+      // Create new item rows in Supabase that reference the transaction
+      for (const item of data.items) {
+        const { data: itemsData, error: itemsError } = await supabase.from('item').insert({
+          transaction_id: generatedId,
+          item_name: item.itemName,
+          cost: item.itemCost,
+          quantity: item.quantity,
+          owner_nickname: '',
+        });
+        if (itemsError) {
+          console.error('Error creating items:', itemsError);
+        } else {
+          console.log('Items created successfully:', itemsData);
         }
       }
-
-      setShareablePageLoading(false);
-      setShareablePageCreated(true);
-      setFormChanged(false); // Reset formChanged after submission
     }
+
+    setShareablePageLoading(false);
+    setShareablePageCreated(true);
+    setFormChanged(false); // Reset formChanged after submission
   };
 
   const handleCopy = () => {
@@ -398,23 +405,29 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
 
   const handleNextPage = () => {
     if (currentPage === 0) {
-      // Split items with quantity > 1 into multiple items
-      setLocalContent(prevContent => {
-        const updatedItems = prevContent.items.flatMap(item => {
-          if (item.quantity > 1) {
-            const splitCost = parseFloat((item.itemCost / item.quantity).toFixed(2));
-            return Array.from({ length: item.quantity }, (_, idx) => ({
-              ...item,
-              itemName: `${item.itemName} (${idx + 1})`,
-              itemCost: splitCost,
-              quantity: 1,
-            }));
-          }
-          return [item];
+      // Check if any items have a quantity greater than 1 and need splitting
+      const itemsNeedSplitting = localContent.items.some(item => item.quantity > 1);
+
+      if (itemsNeedSplitting) {
+        setLocalContent(prevContent => {
+          const updatedItems = prevContent.items.flatMap(item => {
+            if (item.quantity > 1) {
+              const splitCost = parseFloat((item.itemCost / item.quantity).toFixed(2));
+              return Array.from({ length: item.quantity }, (_, idx) => ({
+                ...item,
+                itemName: `${item.itemName} (${idx + 1})`,
+                itemCost: splitCost,
+                quantity: 1,
+              }));
+            }
+            return [item];
+          });
+          return { ...prevContent, items: updatedItems };
         });
-        return { ...prevContent, items: updatedItems };
-      });
+        setFormChanged(true); // Mark form as changed only if items were split
+      }
     }
+
     if (currentPage < 2) setCurrentPage(currentPage + 1);
   };
 
@@ -655,9 +668,9 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
               <div className="relative p-1 rounded-lg bg-gradient-to-r from-blue-600 via-blue-200 to-blue-400 animate-gradient-direction">
                 <Button
                   type="submit"
-                  onClick={(e) => handleSubmit(e, true)} // Force link generation when "Generate Link" is clicked
+                  onClick={(e) => handleSubmit(e, false)} // Do not force link generation unless explicitly needed
                   className={`w-full bg-blue-400 hover:bg-blue-500 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={isButtonDisabled || shareablePageLoading}
+                  disabled={isButtonDisabled || shareablePageLoading} // Ensure button is disabled if form is invalid
                 >
                   {shareablePageLoading ? 'Generating Link...' : 'Generate Link to Share with Friends'}
                 </Button>
