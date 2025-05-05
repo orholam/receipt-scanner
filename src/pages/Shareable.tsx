@@ -19,6 +19,12 @@ const Shareable = () => {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState<boolean>(false); // Add state for help text
+  const [userTotals, setUserTotals] = useState<{ tax: number; tip: number; total: number; items: any[] }>({
+    tax: 0,
+    tip: 0,
+    total: 0,
+    items: [],
+  });
   const helpText = "Select to claim your items, see your total, and pay back what you owe!";
   const supabase = useSupabase();
   const { id } = useParams();
@@ -47,6 +53,26 @@ const Shareable = () => {
     }
   }
 
+  const updateUserTotals = () => {
+    if (!nickname) return;
+
+    const userItems = claimedItems[nickname.toLowerCase()] || [];
+    const userPreTax = userItems.reduce((acc, item) => acc + item.cost, 0);
+    const { individualTotal, individualTax, individualTip } = calcTaxTipTotalShare(
+      transaction.total,
+      transaction.tax,
+      transaction.tip,
+      userPreTax
+    );
+
+    setUserTotals({
+      tax: individualTax,
+      tip: individualTip,
+      total: individualTotal,
+      items: userItems,
+    });
+  };
+
   // Fetch transaction
   const fetchTransaction = async () => {
     const { data, error } = await supabase.from('transaction').select('*').eq('id', id).single();
@@ -63,40 +89,62 @@ const Shareable = () => {
 
   // Divide items into claimed and unclaimed
   const divideItems = (items: any[]) => {
-    const claimedItemsRaw = items.filter((item) => item.owner_nickname);
-    const unclaimedItems = items.filter((item) => !item.owner_nickname);
     const claimedItems = {};
+    const unclaimedItems = [];
 
-    claimedItemsRaw.forEach((item) => {
-      const ownerNickname = item.owner_nickname.toLowerCase(); // Normalize to lowercase
-      if (!claimedItems[ownerNickname]) {
-        claimedItems[ownerNickname] = [];
+    items.forEach((item) => {
+      const ownerNickname = item.owner_nickname?.toLowerCase(); // Normalize to lowercase
+      if (ownerNickname) {
+        if (!claimedItems[ownerNickname]) {
+          claimedItems[ownerNickname] = [];
+        }
+        claimedItems[ownerNickname].push(item);
+      } else {
+        unclaimedItems.push(item);
       }
-      claimedItems[ownerNickname].push(item);
     });
 
     const individualTotals = {};
     Object.keys(claimedItems).forEach((nickname) => {
       const normalizedNickname = nickname.toLowerCase(); // Ensure consistent comparison
       const individualPreTax = claimedItems[normalizedNickname].reduce((acc, item) => acc + item.cost, 0);
-      const { individualTotal, individualTax, individualTip } = calcTaxTipTotalShare(transaction.total, transaction.tax, transaction.tip, individualPreTax);
+      const { individualTotal, individualTax, individualTip } = calcTaxTipTotalShare(
+        transaction.total,
+        transaction.tax,
+        transaction.tip,
+        individualPreTax
+      );
       individualTotals[normalizedNickname] = { individualTotal, individualTax, individualTip };
     });
 
+    // Update state while preserving the original order of items
     setClaimedItems(claimedItems);
     setUnclaimedItems(unclaimedItems);
-    setIndividualTotals(individualTotals);
+    setItems([...items]); // Ensure the items array remains in its original order
   };
 
   // Fetch items
   const fetchItems = async () => {
-    const { data, error } = await supabase.from('item').select('*').eq('transaction_id', id);
+    const { data, error } = await supabase
+      .from('item')
+      .select('*')
+      .eq('transaction_id', id)
+      .order('id', { ascending: true }); // Ensure consistent order by sorting by 'id'
+
     if (error) {
       console.error('Error fetching items:', error);
       setError('Error fetching items');
     } else {
-      setItems(data);
-      divideItems(data);
+      // Update items in place without reordering
+      setItems((prevItems) => {
+        const updatedItems = prevItems.map((item) => {
+          const updatedItem = data.find((newItem) => newItem.id === item.id);
+          return updatedItem ? updatedItem : item; // Update if found, otherwise keep the original
+        });
+        const newItems = data.filter((newItem) => !prevItems.some((item) => item.id === newItem.id));
+        return [...updatedItems, ...newItems]; // Add any new items at the end
+      });
+      divideItems(data); // Update claimed and unclaimed items
     }
   };
 
@@ -131,17 +179,61 @@ const Shareable = () => {
     }
   }, [transaction]); // Run when transaction changes
 
-  const toggleItemSelection = (itemName: string) => {
-    setSelectedItems((prevSelectedItems) =>
-      prevSelectedItems.includes(itemName)
-        ? prevSelectedItems.filter((i) => i !== itemName)
-        : [...prevSelectedItems, itemName]
-    );
-  };
+  useEffect(() => {
+    updateUserTotals();
+  }, [claimedItems, nickname]); // Update user totals whenever claimed items or nickname changes
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+  const toggleItemSelection = async (itemId: string) => {
+    try {
+      const item = items.find((i) => i.id === itemId);
+      console.log("Toggle item:", item);
+      console.log("Current nickname:", nickname);
+      
+      const isClaimedByCurrentUser = item?.owner_nickname?.toLowerCase() === nickname?.toLowerCase();
+      console.log("Is claimed by current user:", isClaimedByCurrentUser);
+
+      if (isClaimedByCurrentUser) {
+        // Unclaim the single item
+        console.log("Attempting to unclaim item:", itemId);
+        const { data, error } = await supabase
+          .from('item')
+          .update({ owner_nickname: null })
+          .eq('transaction_id', id)
+          .eq('id', itemId);
+
+        if (error) {
+          console.error('Error unclaiming item:', error);
+          setError('Error unclaiming item');
+          return;
+        }
+
+        console.log('Item unclaimed successfully:', data);
+      } else {
+        // Claim the item
+        console.log("Attempting to claim item:", itemId);
+        const { data, error } = await supabase
+          .from('item')
+          .update({ owner_nickname: nickname?.toLowerCase() })
+          .eq('transaction_id', id)
+          .eq('id', itemId);
+
+        if (error) {
+          console.error('Error claiming item:', error);
+          setError('Error claiming item');
+          return;
+        }
+
+        console.log('Item claimed successfully:', data);
+      }
+
+      // Refresh the state to reflect the updated ownership
+      await fetchItems();
+      updateUserTotals(); // Ensure the user's box updates correctly
+    } catch (err) {
+      console.error('Unexpected error in toggleItemSelection:', err);
+      setError('An unexpected error occurred');
+    }
+  };
 
   const updateSelectedItems = async () => {
     console.log(selectedItems);
@@ -196,6 +288,10 @@ const Shareable = () => {
       fetchItems();
     }
   };
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <div className="flex flex-col flex-grow bg-gradient-to-b from-indigo-100 to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10">
@@ -284,41 +380,44 @@ const Shareable = () => {
                 )}
               </div>
               <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{transactionName}</h1>
-              <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
-                {Object.keys(claimedItems).map((item) => (
-                  <>
-                    <div className="flex flex-row justify-between w-full px-6 py-4 rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 text-gray-800 border-t-4 border-orange-300 shadow-lg">
-                      <div className="flex flex-col space-y-2">
-                        <p className="font-semibold text-lg">{item}</p>
-                        {claimedItems[item].map((item) => (
-                          <p className="text-sm">{item.item_name} - <span className="font-medium">${item.cost}</span></p>
-                        ))}
-                      </div>
-                      <div className="flex flex-col space-y-2 text-right">
-                        <p className="text-sm">Tax: <span className="font-medium">${individualTotals[item].individualTax}</span></p>
-                        <p className="text-sm">Tip: <span className="font-medium">${individualTotals[item].individualTip}</span></p>
-                        <p className="text-sm"><b>Total:</b> <span className="font-bold">${individualTotals[item].individualTotal}</span></p>
-                        {nickname && nickname === item && (
-                          <div className="flex justify-end">
-                            <X className="h-4 w-4 cursor-pointer" onClick={() => unclaimAllItems()} />
-                          </div>
-                        )}
-                      </div>
+              {isNicknameSet && (
+                <>
+                  <div className="w-full px-6 py-4 rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100 text-gray-800 border-t-4 border-yellow-300 shadow-lg mb-6">
+                    <div className="flex flex-col space-y-2">
+                      <p className="font-semibold text-lg">{nickname}</p>
+                      {userTotals.items.map((item) => (
+                        <p className="text-sm" key={item.id}>
+                          {item.item_name} - <span className="font-medium">${item.cost}</span>
+                        </p>
+                      ))}
                     </div>
-                  </>
-                ))}
-                {unclaimedItems.length > 0 && <p className="text-gray-800 mb-6 text-center">What items were yours {nickname}?</p>}
-                {unclaimedItems.map((item) => (
+                    <div className="flex flex-col space-y-2 text-right">
+                      <p className="text-sm">Tax: <span className="font-medium">${userTotals.tax}</span></p>
+                      <p className="text-sm">Tip: <span className="font-medium">${userTotals.tip}</span></p>
+                      <p className="text-sm"><b>Total:</b> <span className="font-bold">${userTotals.total}</span></p>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className={`space-y-4 w-full transition-all duration-300 ${selectedItems.length > 0 ? 'mb-6' : ''}`}>
+                {items.map((item) => (
                   <div
                     key={`${item.id}`}
-                    onClick={() => toggleItemSelection(`${item.id}`)} // TODO: add full item, might make it easier to update state after claim and before backend updated
-                    className={`cursor-pointer w-full px-4 py-2 rounded-full border text-center ${
-                      selectedItems.includes(`${item.id}`)
+                    onClick={() => toggleItemSelection(`${item.id}`)} // Claim or unclaim the item on click
+                    className={`relative cursor-pointer w-full px-4 py-2 rounded-full border text-center ${
+                      item.owner_nickname?.toLowerCase() === nickname?.toLowerCase()
                         ? 'bg-blue-400 text-white'
+                        : item.owner_nickname
+                        ? 'bg-blue-100 text-gray-800 border-blue-300'
                         : 'bg-white text-gray-800 border border-grey-300'
                     } transition-colors duration-200`}
                   >
                     {item.item_name} - ${item.cost}
+                    {item.owner_nickname && (
+                      <div className="absolute top-1 right-1 bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded-full">
+                        {item.owner_nickname}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -328,6 +427,14 @@ const Shareable = () => {
                   onClick={updateSelectedItems}
                 >
                   Claim
+                </button>
+              )}
+              {isNicknameSet && (
+                <button
+                  className="w-full bg-red-400 text-white py-2 rounded-lg hover:bg-red-500 transition-colors duration-300 mt-6"
+                  onClick={() => unclaimAllItems()}
+                >
+                  Clear All
                 </button>
               )}
             </>
