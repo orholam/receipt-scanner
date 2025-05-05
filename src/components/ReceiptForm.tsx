@@ -78,7 +78,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     headScript.innerHTML = `
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
       new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l;'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','GTM-ML2ZRPGF');
     `;
@@ -119,6 +119,9 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   const supabase = useSupabase();
   const [isPaymentMethodEnabled, setIsPaymentMethodEnabled] = useState<boolean>(false); // Default set to false
   const [showQRCode, setShowQRCode] = useState<boolean>(false); // State to toggle QR code visibility
+  const [splitModalOpen, setSplitModalOpen] = useState<boolean>(false);
+  const [splitCount, setSplitCount] = useState<number | null>(null);
+  const [splitItemIndex, setSplitItemIndex] = useState<number | null>(null);
 
   const getHelpText = () => {
     switch (currentPage) {
@@ -248,25 +251,30 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
     setLocalContent({ ...localContent, items: [...localContent.items, newItem] });
   };
 
-  const handleSplitItem = (index: number, e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // Prevent form submission
-    const splitCount = prompt('How many people are spliting the item?:', '2');
-    if (splitCount !== null && parseInt(splitCount, 10) > 1) {
-      const itemToSplit = localContent.items[index];
-      const splitCountInt = parseInt(splitCount, 10);
-      const newItems = Array.from({ length: splitCountInt }, (_, i) => ({
+  const handleSplitItem = (index: number) => {
+    setSplitItemIndex(index);
+    setSplitCount(2); // Always reset to default value of 2
+    setSplitModalOpen(true); // Open the modal
+  };
+
+  const confirmSplit = () => {
+    if (splitCount && splitItemIndex !== null && splitCount > 1) {
+      const itemToSplit = localContent.items[splitItemIndex];
+      const newItems = Array.from({ length: splitCount }, (_, i) => ({
         itemName: `${itemToSplit.itemName} (${i + 1})`,
-        itemCost: parseFloat((itemToSplit.itemCost / splitCountInt).toFixed(2)),
-        quantity: 1
+        itemCost: parseFloat((itemToSplit.itemCost / splitCount).toFixed(2)),
+        quantity: 1,
       }));
-      let updatedItems = [
-        ...localContent.items.slice(0, index),
-        ...localContent.items.slice(index + 1),
-        ...newItems
+      const updatedItems = [
+        ...localContent.items.slice(0, splitItemIndex),
+        ...localContent.items.slice(splitItemIndex + 1),
+        ...newItems,
       ];
       setLocalContent({ ...localContent, items: updatedItems });
-      setFormChanged(true); // Ensure formChanged is set to true
+      setFormChanged(true);
     }
+    setSplitModalOpen(false); // Close the modal
+    setSplitItemIndex(null); // Reset item index
   };
 
   const collectFormData = () => {
@@ -408,7 +416,6 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
             if (item.quantity > 1) {
               const splitCost = parseFloat((item.itemCost / item.quantity).toFixed(2));
               return Array.from({ length: item.quantity }, (_, idx) => ({
-                ...item,
                 itemName: `${item.itemName} (${idx + 1})`,
                 itemCost: splitCost,
                 quantity: 1,
@@ -435,7 +442,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         return (
           <>
             <h2 className="text-xl font-bold mb-4">Step 1: Add Items</h2>
-            <p className="text-gray-600 mb-4">Add items and their costs here. Ensure all items from the receipt are added. Use the remove and split button as needed for shared items.</p>
+            <p className="text-gray-600 mb-4">Scan complete! Ensure all items and costs are corrent and correctly added. If you split certain items with people, please use the split button.</p>
             <div className="space-y-2">
               <Label htmlFor="vendor">Vendor</Label>
               <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} onChange={(e) => setLocalContent({ ...localContent, businessName: e.target.value })} />
@@ -479,7 +486,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
                     <MinusCircle size={20} />
                   </button>
                   <button
-                    onClick={(e) => handleSplitItem(index, e)}
+                    onClick={() => handleSplitItem(index)}
                     className="text-blue-500 hover:text-blue-600 flex items-center"
                   >
                     <Split size={20} />
@@ -708,33 +715,84 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
   };
 
   return (
-    <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
-      {renderPageContent()}
-      <div className="flex justify-between mt-4">
-        <div className="flex-1">
-          {currentPage > 0 && (
-            <Button 
-              type="button" 
-              onClick={handlePreviousPage} 
-              className="bg-gray-300 hover:bg-gray-400 text-black w-32"
-            >
-              Previous
-            </Button>
-          )}
+    <>
+      <style>
+        {`
+          @keyframes pulsate {
+            0%, 100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.1);
+            }
+          }
+        `}
+      </style>
+
+      {/* Split Modal */}
+      {splitModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-lg font-semibold mb-4">Split Item</h2>
+            <p className="text-gray-600 mb-4">How many people are splitting this item?</p>
+            <input
+              type="number"
+              min="2"
+              value={splitCount || ''}
+              onChange={(e) => setSplitCount(parseInt(e.target.value, 10) || null)}
+              className="w-full px-4 py-2 border rounded-lg mb-4"
+              placeholder="Enter a number (e.g., 2)"
+            />
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setSplitModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSplit}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex-1 text-right">
-          {currentPage < 2 && (
-            <Button 
-              type="button" 
-              onClick={handleNextPage} 
-              className="bg-blue-400 hover:bg-blue-500 text-white w-32"
-            >
-              Next
-            </Button>
-          )}
+      )}
+
+      {/* Existing Form */}
+      <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
+        {renderPageContent()}
+        <div className="flex justify-between mt-4">
+          <div className="flex-1">
+            {currentPage > 0 && (
+              <Button 
+                type="button" 
+                onClick={handlePreviousPage} 
+                className="bg-gray-300 hover:bg-gray-400 text-black w-32"
+              >
+                Previous
+              </Button>
+            )}
+          </div>
+          <div className="flex-1 text-right">
+            {currentPage < 2 && (
+              <Button 
+                type="button" 
+                onClick={handleNextPage} 
+                className="bg-blue-400 hover:bg-blue-500 text-white w-32"
+                style={{
+                  animation: "pulsate 1.5s infinite ease-in-out"
+                }}
+              >
+                Next
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </>
   );
 };
 
