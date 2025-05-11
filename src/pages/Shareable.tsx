@@ -4,7 +4,7 @@ import { useSupabase } from '@/SupabaseContext';
 import { X, ArrowLeft } from 'lucide-react'; // Import the ArrowLeft icon
 import Header from '@/components/Header';
 import venmoLogo from '@/assets/venmo.svg';
-import Congratulations from '@/components/modals/congratulations';
+import Congratulations from '@/components/modals/Congratulations';
 
 const Shareable = () => {
   useEffect(() => {
@@ -172,7 +172,27 @@ const Shareable = () => {
   }
 
   const updateSelectedItems = async () => {
-    console.log(selectedItems);
+    console.log("Starting updateSelectedItems with nickname:", nickname);
+    console.log("Selected items:", selectedItems);
+
+    // Check if this is the first claim for this nickname BEFORE making any updates
+    const { data: existingClaims, error: claimsError } = await supabase
+      .from('item')
+      .select('id, owner_nickname')
+      .eq('owner_nickname', nickname?.toLowerCase())
+      .eq('transaction_id', id); // Add this line to only check claims in current transaction
+    
+    if (claimsError) {
+      console.error('Error checking existing claims:', claimsError);
+    }
+
+    const isFirstClaim = !existingClaims || existingClaims.length === 0;
+    console.log("First claim check:", {
+      existingClaims,
+      isFirstClaim,
+      transactionId: id,
+      nickname: nickname?.toLowerCase()
+    });
 
     // Fetch the latest state of the selected items
     const { data: latestItems, error: fetchError } = await supabase
@@ -191,18 +211,10 @@ const Shareable = () => {
       (item) => !item.owner_nickname || item.owner_nickname.toLowerCase() === nickname?.toLowerCase()
     );
 
-    // Check if this is the first claim for this nickname
-    const { data: existingClaims } = await supabase
-      .from('item')
-      .select('id')
-      .eq('owner_nickname', nickname);
-    
-    const isFirstClaim = !existingClaims || existingClaims.length === 0;
-
     // Update database for unclaimed items
     const { data, error } = await supabase
       .from('item')
-      .update({ owner_nickname: nickname?.toLowerCase() }) // Normalize nickname to lowercase
+      .update({ owner_nickname: nickname?.toLowerCase() })
       .eq('transaction_id', id)
       .in('id', unclaimedItemsToClaim.map((item) => item.id));
 
@@ -211,12 +223,13 @@ const Shareable = () => {
       setError('Error updating items');
     } else {
       console.log('Items updated successfully:', data);
-      // Calculate the total owed for the newly claimed items
       await fetchItems(); // Refresh items to get updated totals
       
       if (isFirstClaim) {
-        const userTotal = individualTotals[nickname]?.individualTotal || 0;
+        console.log("Showing congratulations modal for first claim");
         setShowCongratulations(true);
+      } else {
+        console.log("Not showing congratulations modal - not first claim");
       }
     }
 
@@ -379,9 +392,10 @@ const Shareable = () => {
       </div>
       {showCongratulations && individualTotals[nickname] && (
         <Congratulations 
-          isOpen={showCongratulations}
-          onClose={() => setShowCongratulations(false)}
+          name={nickname}
           value={individualTotals[nickname].individualTotal}
+          onClose={() => setShowCongratulations(false)}
+          onTrySample={() => setShowCongratulations(false)}
         />
       )}
     </div>

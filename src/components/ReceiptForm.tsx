@@ -442,7 +442,7 @@ const ReceiptForm = ({ onSubmit, content }: ReceiptFormProps) => {
         return (
           <>
             <h2 className="text-xl font-bold mb-4">Step 1: Add Items</h2>
-            <p className="text-gray-600 mb-4">Scan complete! Ensure all items and costs are corrent and correctly added. If you split certain items with people, please use the split button.</p>
+            <p className="text-gray-600 mb-4">Scan complete! Ensure all items and costs are correct and correctly added. If you split certain items with people, please use the split button.</p>
             <div className="space-y-2">
               <Label htmlFor="vendor">Vendor</Label>
               <Input id="vendor" name="vendor" defaultValue={localContent.businessName || "Pizzeria"} onChange={(e) => setLocalContent({ ...localContent, businessName: e.target.value })} />
