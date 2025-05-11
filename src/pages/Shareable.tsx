@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSupabase } from '@/SupabaseContext';
 import { X, ArrowLeft } from 'lucide-react'; // Import the ArrowLeft icon
 import Header from '@/components/Header';
@@ -7,6 +7,8 @@ import venmoLogo from '@/assets/venmo.svg';
 import Congratulations from '@/components/modals/Congratulations';
 
 const Shareable = () => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     // Google Tag Manager script for <head>
     const headScript = document.createElement('script');
@@ -252,6 +254,11 @@ const Shareable = () => {
     }
   };
 
+  const handleTrySample = () => {
+    // Navigate to the index page with a query parameter
+    navigate('/scan/?useSample=true');
+  };
+
   return (
     <div className="flex flex-col flex-grow bg-gradient-to-b from-indigo-100 to-white p-4 md:p-8 mx-4 my-4 rounded-lg mb-10">
       <Header />
@@ -395,7 +402,7 @@ const Shareable = () => {
           name={nickname}
           value={individualTotals[nickname].individualTotal}
           onClose={() => setShowCongratulations(false)}
-          onTrySample={() => setShowCongratulations(false)}
+          onTrySample={handleTrySample}
         />
       )}
     </div>

@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useSearchParams } from 'react-router-dom';
 
 const scrollToBottom = () => {
   window.scrollTo({
@@ -32,6 +33,7 @@ type OCRResult = {
 };
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const [isOcrComplete, setIsOcrComplete] = useState(false);
@@ -63,6 +65,15 @@ const Index = () => {
       document.head.removeChild(headScript);
       document.body.removeChild(noscript);
     };
+  }, []);
+
+  useEffect(() => {
+    const useSample = searchParams.get('useSample');
+    if (useSample === 'true') {
+      handleTrySample();
+      // Clear the URL parameter after processing
+      window.history.replaceState({}, '', '/');
+    }
   }, []);
 
   useEffect(() => {
